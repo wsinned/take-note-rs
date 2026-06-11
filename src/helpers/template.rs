@@ -36,19 +36,19 @@ pub fn get_template_content(
     std::fs::read_to_string(&path).map_err(|e| TemplateError::Io(e.to_string()))
 }
 
-/// Replaces `HEADER_DATE` in template content with the given date string.
+/// Replaces `{{date}}` in template content with the given date string.
 ///
 /// # Examples
 ///
 /// ```
 /// use take_note::helpers::template::update_template_variables;
 ///
-/// let content = "# W/C HEADER_DATE\n\n";
+/// let content = "# W/C {{date}}\n\n";
 /// let updated = update_template_variables(content, "Monday 28 July 2025");
 /// assert_eq!(updated, "# W/C Monday 28 July 2025\n\n");
 /// ```
 pub fn update_template_variables(content: &str, date: &str) -> String {
-    content.replace("HEADER_DATE", date)
+    content.replace("{{date}}", date)
 }
 
 /// Errors that can occur when loading templates.
@@ -82,7 +82,7 @@ mod tests {
 
     #[test]
     fn test_update_template_variables() {
-        let content = "# W/C HEADER_DATE\n\nSome content\n";
+        let content = "# W/C {{date}}\n\nSome content\n";
         let updated = update_template_variables(content, "Monday 28 July 2025");
         assert_eq!(updated, "# W/C Monday 28 July 2025\n\nSome content\n");
     }
@@ -115,10 +115,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let template_path = dir.path().join("template.md");
         let mut file = std::fs::File::create(&template_path).unwrap();
-        write!(file, "# W/C HEADER_DATE\n").unwrap();
+        write!(file, "# W/C {{{{date}}}}\n").unwrap();
 
         let result =
             get_template_content(dir.path().to_str().unwrap(), Some("template.md")).unwrap();
-        assert_eq!(result, "# W/C HEADER_DATE\n");
+        assert_eq!(result, "# W/C {{date}}\n");
     }
 }

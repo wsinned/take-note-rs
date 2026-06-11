@@ -91,7 +91,7 @@ take-note daily --when today
 
 ### Templates
 
-Supply a template path relative to `notesFolder`. The placeholder `HEADER_DATE` is replaced with the note date formatted as `Monday 28 July 2025`.
+Supply a template path relative to `notesFolder`. The placeholder `{{date}}` is replaced with the note date formatted as `Monday 28 July 2025`.
 
 ```bash
 take-note weekly --when thisWeek --template Templates/weekly-template.md
