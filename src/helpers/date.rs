@@ -3,6 +3,7 @@ use thiserror::Error;
 
 /// Weekly note timing options.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[allow(clippy::enum_variant_names)]
 pub enum When {
     LastWeek,
     ThisWeek,

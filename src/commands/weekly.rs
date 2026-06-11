@@ -58,7 +58,7 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
         .ok_or("notesFolder is required. Set it in ~/.config/take-note/config.toml or pass --notes-folder.")?;
 
     let batch_size = merged.batch.unwrap_or(1);
-    if batch_size < 1 || batch_size > 8 {
+    if !(1..=8).contains(&batch_size) {
         return Err("batch size must be between 1 and 8".into());
     }
 
