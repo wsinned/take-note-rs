@@ -50,7 +50,8 @@ pub struct WeeklyArgs {
 /// Run the weekly note command.
 pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
     let config_name = args.config.as_deref().unwrap_or("default");
-    let cfg = crate::helpers::config::load_config(config_name, None)?;
+    let cfg =
+        crate::helpers::config::load_config_with_fallback(config_name, Some("weekly"), None)?;
     let merged = merge_with_flags(&cfg, args);
 
     let notes_folder = merged

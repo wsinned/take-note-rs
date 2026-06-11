@@ -44,7 +44,8 @@ pub struct DailyArgs {
 /// Run the daily note command.
 pub fn run(args: DailyArgs) -> Result<(), Box<dyn std::error::Error>> {
     let config_name = args.config.as_deref().unwrap_or("default");
-    let cfg = crate::helpers::config::load_config(config_name, None)?;
+    let cfg =
+        crate::helpers::config::load_config_with_fallback(config_name, Some("daily"), None)?;
     let merged = merge_with_flags(&cfg, args);
 
     let notes_folder = merged

@@ -54,7 +54,33 @@ pub enum ConfigError {
 ///
 /// let config = load_config("default", None).unwrap();
 /// ```
+#[allow(dead_code)]
 pub fn load_config(name: &str, config_path: Option<&Path>) -> Result<NamedConfig, ConfigError> {
+    load_config_with_fallback(name, None, config_path)
+}
+
+/// Loads a config section with an optional command-specific fallback.
+///
+/// If `command_name` is provided, the lookup order is:
+/// 1. Named section (from `--config` flag)
+/// 2. Command-specific section (e.g. `[weekly]` or `[daily]`)
+/// 3. `[default]` section
+///
+/// This allows separate defaults for each command without requiring
+/// explicit `--config` flags.
+///
+/// # Examples
+///
+/// ```no_run
+/// use take_note::helpers::config::load_config_with_fallback;
+///
+/// let config = load_config_with_fallback("default", Some("weekly"), None).unwrap();
+/// ```
+pub fn load_config_with_fallback(
+    name: &str,
+    command_name: Option<&str>,
+    config_path: Option<&Path>,
+) -> Result<NamedConfig, ConfigError> {
     let path = config_path
         .map(PathBuf::from)
         .unwrap_or_else(default_config_path);
@@ -68,12 +94,69 @@ pub fn load_config(name: &str, config_path: Option<&Path>) -> Result<NamedConfig
         }
     };
 
-    let section = file
-        .sections
-        .get(name)
-        .or_else(|| file.sections.get("default"))
-        .cloned()
-        .unwrap_or_default();
+    // Determine the effective section to use
+    let section = if name != "default" {
+        // Explicit --config flag was used, look up that section directly
+        let named_section = file.sections
+            .get(name)
+            .cloned()
+            .unwrap_or_default();
+        
+        // Also merge with default for missing fields
+        let default_section = file
+            .sections
+            .get("default")
+            .cloned()
+            .unwrap_or_default();
+        
+        let mut merged = named_section.clone();
+        if merged.notes_folder.is_none() {
+            merged.notes_folder = default_section.notes_folder.clone();
+        }
+        if merged.editor.is_none() {
+            merged.editor = default_section.editor.clone();
+        }
+        if merged.template.is_none() {
+            merged.template = default_section.template.clone();
+        }
+        if merged.batch.is_none() {
+            merged.batch = default_section.batch;
+        }
+        merged
+    } else {
+        // No --config flag, use command-specific section if available
+        let command_section = command_name
+            .and_then(|cmd| file.sections.get(cmd))
+            .cloned();
+        
+        let default_section = file
+            .sections
+            .get("default")
+            .cloned()
+            .unwrap_or_default();
+        
+        match command_section {
+            Some(cmd) => {
+                // Merge command-specific with default: command wins for set fields,
+                // default fills in missing fields
+                let mut merged = cmd.clone();
+                if merged.notes_folder.is_none() {
+                    merged.notes_folder = default_section.notes_folder.clone();
+                }
+                if merged.editor.is_none() {
+                    merged.editor = default_section.editor.clone();
+                }
+                if merged.template.is_none() {
+                    merged.template = default_section.template.clone();
+                }
+                if merged.batch.is_none() {
+                    merged.batch = default_section.batch;
+                }
+                merged
+            }
+            None => default_section,
+        }
+    };
 
     let mut merged = section.clone();
     if merged.editor.is_none() {
@@ -166,10 +249,10 @@ editor = "vscode"
         assert_eq!(default_cfg.batch, Some(3));
         assert_eq!(default_cfg.template, None);
 
-        let work_cfg = load_config("work", Some(tmp.path())).unwrap();
+        let work_cfg = load_config_with_fallback("work", None, Some(tmp.path())).unwrap();
         assert_eq!(work_cfg.notes_folder, Some("/tmp/work".to_string()));
         assert_eq!(work_cfg.editor, Some(Editor::Vscode));
-        assert_eq!(work_cfg.batch, Some(1)); // falls back to default
+        assert_eq!(work_cfg.batch, Some(3)); // falls back to default
         assert_eq!(work_cfg.template, None);
     }
 
@@ -193,7 +276,90 @@ notes_folder = "/tmp/notes"
         )
         .unwrap();
 
-        let cfg = load_config("work", Some(tmp.path())).unwrap();
+        let cfg = load_config_with_fallback("work", None, Some(tmp.path())).unwrap();
         assert_eq!(cfg.notes_folder, Some("/tmp/notes".to_string()));
+    }
+
+    #[test]
+    fn test_load_config_with_fallback_command_section() {
+        let mut tmp = tempfile::NamedTempFile::new().unwrap();
+        write!(
+            tmp,
+            r#"
+[default]
+notes_folder = "/tmp/notes"
+editor = "obsidian"
+template = "Templates/Weekly.md"
+batch = 3
+
+[weekly]
+template = "Templates/Custom-Weekly.md"
+
+[daily]
+template = "Templates/Daily.md"
+"#
+        )
+        .unwrap();
+
+        // Weekly should use [weekly] section merged with [default]
+        let weekly_cfg = load_config_with_fallback("default", Some("weekly"), Some(tmp.path())).unwrap();
+        assert_eq!(weekly_cfg.notes_folder, Some("/tmp/notes".to_string()));
+        assert_eq!(weekly_cfg.editor, Some(Editor::Obsidian));
+        assert_eq!(weekly_cfg.template, Some("Templates/Custom-Weekly.md".to_string()));
+        assert_eq!(weekly_cfg.batch, Some(3));
+
+        // Daily should use [daily] section merged with [default]
+        let daily_cfg = load_config_with_fallback("default", Some("daily"), Some(tmp.path())).unwrap();
+        assert_eq!(daily_cfg.notes_folder, Some("/tmp/notes".to_string()));
+        assert_eq!(daily_cfg.editor, Some(Editor::Obsidian));
+        assert_eq!(daily_cfg.template, Some("Templates/Daily.md".to_string()));
+        assert_eq!(daily_cfg.batch, Some(3));
+    }
+
+    #[test]
+    fn test_load_config_with_fallback_no_command_section() {
+        let mut tmp = tempfile::NamedTempFile::new().unwrap();
+        write!(
+            tmp,
+            r#"
+[default]
+notes_folder = "/tmp/notes"
+editor = "obsidian"
+template = "Templates/Weekly.md"
+"#
+        )
+        .unwrap();
+
+        // No [weekly] section, should fall back to [default]
+        let weekly_cfg = load_config_with_fallback("default", Some("weekly"), Some(tmp.path())).unwrap();
+        assert_eq!(weekly_cfg.template, Some("Templates/Weekly.md".to_string()));
+    }
+
+    #[test]
+    fn test_explicit_config_flag_ignores_command_fallback() {
+        let mut tmp = tempfile::NamedTempFile::new().unwrap();
+        write!(
+            tmp,
+            r#"
+[default]
+notes_folder = "/tmp/notes"
+editor = "obsidian"
+template = "Templates/Weekly.md"
+
+[weekly]
+template = "Templates/Custom-Weekly.md"
+
+[custom]
+notes_folder = "/tmp/custom"
+editor = "vscode"
+"#
+        )
+        .unwrap();
+
+        // With --config custom, should use [custom] merged with [default]
+        let cfg = load_config_with_fallback("custom", Some("weekly"), Some(tmp.path())).unwrap();
+        assert_eq!(cfg.notes_folder, Some("/tmp/custom".to_string()));
+        assert_eq!(cfg.editor, Some(Editor::Vscode));
+        assert_eq!(cfg.template, Some("Templates/Weekly.md".to_string())); // inherited from default
     }
 }

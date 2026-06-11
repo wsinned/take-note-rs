@@ -37,16 +37,25 @@ Use multiple configs for different contexts:
 
 ```toml
 [default]
-notesFolder = "~/Documents/Personal/Weekly"
+notesFolder = "~/Documents/Personal/Notes"
 editor = "obsidian"
 
+[weekly]
+template = "Templates/Weekly.md"
+batch = 3
+
+[daily]
+template = "Templates/Daily.md"
+
 [work]
-notesFolder = "~/Documents/Work/Weekly"
+notesFolder = "~/Documents/Work/Notes"
 editor = "vscode"
 batch = 2
 ```
 
 Select with `--config work`.
+
+Without `--config`, commands use their own section (`[weekly]` or `[daily]`) if it exists, then fall back to `[default]`. This lets you set command-specific defaults (e.g. different templates for weekly vs daily) without specifying `--config` every time.
 
 ---
 
