@@ -1,0 +1,153 @@
+# take-note-rs
+
+A Rust CLI for creating and managing weekly and daily markdown notes. Drop-in replacement for the TypeScript/Deno version.
+
+## Installation
+
+### From source (requires Rust)
+
+```bash
+git clone https://github.com/wsinned/take-note-rs.git
+cd take-note-rs
+cargo build --release
+# Binary at target/release/take-note
+```
+
+### Pre-built binaries
+
+Coming soon via GitHub releases.
+
+---
+
+## Configuration
+
+Reads from `~/.config/take-note/config.toml` if it exists. CLI flags always override config values.
+
+```toml
+[default]
+notesFolder = "~/Documents/Notes/Weekly"
+editor = "obsidian"           # obsidian | vscode | generic
+template = "Templates/weekly-template.md"
+batch = 1
+```
+
+### Named configs
+
+Use multiple configs for different contexts:
+
+```toml
+[default]
+notesFolder = "~/Documents/Personal/Weekly"
+editor = "obsidian"
+
+[work]
+notesFolder = "~/Documents/Work/Weekly"
+editor = "vscode"
+batch = 2
+```
+
+Select with `--config work`.
+
+---
+
+## Usage
+
+```
+take-note weekly [OPTIONS]
+take-note daily [OPTIONS]
+take-note --help
+take-note --version
+```
+
+### Weekly notes
+
+```bash
+take-note weekly --when thisWeek
+take-note weekly --when thisWeek --config work
+take-note weekly --when thisWeek --editor vscode
+```
+
+### `--when` options (weekly)
+
+| Value | Description |
+|-------|-------------|
+| `lastWeek` | Monday of last week |
+| `thisWeek` | Monday of current week |
+| `nextWeek` | Monday of next week |
+
+### Daily notes
+
+```bash
+take-note daily --when today
+```
+
+### `--when` options (daily)
+
+| Value | Description |
+|-------|-------------|
+| `yesterday` | Yesterday's date |
+| `today` | Today's date |
+| `tomorrow` | Tomorrow's date |
+
+### Templates
+
+Supply a template path relative to `notesFolder`. The placeholder `HEADER_DATE` is replaced with the note date formatted as `Monday 28 July 2025`.
+
+```bash
+take-note weekly --when thisWeek --template Templates/weekly-template.md
+```
+
+### Headless / automation mode
+
+```bash
+# Text output (default)
+take-note weekly --when thisWeek --noOpen
+
+# JSON output
+take-note weekly --when thisWeek --noOpen --format json
+
+# Silent (exit code only)
+take-note weekly --when thisWeek --noOpen --format silent
+```
+
+---
+
+## Development
+
+```bash
+cargo test        # Run all tests (including doc tests)
+cargo build       # Debug build
+cargo build --release  # Optimized binary
+```
+
+### Project structure
+
+```
+src/
+  main.rs              # Entry point
+  commands/
+    weekly.rs          # Weekly notes command
+    daily.rs           # Daily notes command
+  helpers/
+    config.rs          # TOML config loading
+    date.rs            # Date calculations
+    output.rs          # Format output for --noOpen
+    template.rs        # Template loading & variable replacement
+  handlers/
+    mod.rs             # Editor integrations (obsidian, vscode, generic)
+  options/
+    editor.rs          # Editor option parsing
+```
+
+---
+
+## Roadmap
+
+- [x] Weekly notes
+- [x] Daily notes
+- [x] Headless mode (`--noOpen`, `--format`)
+- [x] Config file support
+- [x] Named configs
+- [x] Batch creation (`--batch N`)
+- [ ] `take-note init` setup wizard
+- [ ] Append mode (`--append "text"`)
