@@ -23,6 +23,7 @@ pub enum Editor {
 /// Configuration for a single named profile.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq)]
 pub struct NamedConfig {
+    #[serde(alias = "notesFolder")]
     pub notes_folder: Option<String>,
     pub editor: Option<Editor>,
     pub template: Option<String>,
