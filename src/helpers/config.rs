@@ -6,8 +6,6 @@ use thiserror::Error;
 /// Path to the default config file.
 pub const CONFIG_PATH: &str = ".config/take-note/config.toml";
 
-
-
 /// Supported editor types.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -17,8 +15,6 @@ pub enum Editor {
     Obsidian,
     Vscode,
 }
-
-
 
 /// Configuration for a single named profile.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq)]
@@ -44,7 +40,6 @@ pub enum ConfigError {
     Io(#[from] std::io::Error),
     #[error("TOML parse error: {0}")]
     Parse(#[from] toml::de::Error),
-
 }
 
 /// Loads a named config section, merging with built-in defaults.
@@ -60,7 +55,9 @@ pub enum ConfigError {
 /// let config = load_config("default", None).unwrap();
 /// ```
 pub fn load_config(name: &str, config_path: Option<&Path>) -> Result<NamedConfig, ConfigError> {
-    let path = config_path.map(PathBuf::from).unwrap_or_else(default_config_path);
+    let path = config_path
+        .map(PathBuf::from)
+        .unwrap_or_else(default_config_path);
 
     let file = if path.exists() {
         let raw = std::fs::read_to_string(&path)?;

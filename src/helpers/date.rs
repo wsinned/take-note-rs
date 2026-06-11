@@ -84,8 +84,7 @@ impl DailyWhen {
 /// assert_eq!(result, monday);
 /// ```
 pub fn date_from_when(date: NaiveDate, when: When) -> NaiveDate {
-    let monday = date
-        - Duration::days(date.weekday().num_days_from_monday() as i64);
+    let monday = date - Duration::days(date.weekday().num_days_from_monday() as i64);
 
     match when {
         When::LastWeek => monday - Duration::days(7),
@@ -298,8 +297,14 @@ mod tests {
     #[test]
     fn test_daily_when_from_str() {
         assert_eq!(DailyWhen::from_str("today").unwrap(), DailyWhen::Today);
-        assert_eq!(DailyWhen::from_str("yesterday").unwrap(), DailyWhen::Yesterday);
-        assert_eq!(DailyWhen::from_str("tomorrow").unwrap(), DailyWhen::Tomorrow);
+        assert_eq!(
+            DailyWhen::from_str("yesterday").unwrap(),
+            DailyWhen::Yesterday
+        );
+        assert_eq!(
+            DailyWhen::from_str("tomorrow").unwrap(),
+            DailyWhen::Tomorrow
+        );
         assert!(DailyWhen::from_str("invalid").is_err());
     }
 }

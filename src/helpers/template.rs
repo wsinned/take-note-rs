@@ -117,11 +117,8 @@ mod tests {
         let mut file = std::fs::File::create(&template_path).unwrap();
         write!(file, "# W/C HEADER_DATE\n").unwrap();
 
-        let result = get_template_content(
-            dir.path().to_str().unwrap(),
-            Some("template.md"),
-        )
-        .unwrap();
+        let result =
+            get_template_content(dir.path().to_str().unwrap(), Some("template.md")).unwrap();
         assert_eq!(result, "# W/C HEADER_DATE\n");
     }
 }

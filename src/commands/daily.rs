@@ -2,12 +2,12 @@ use clap::Args;
 use std::path::PathBuf;
 
 use crate::handlers::open_with_editor;
-use crate::helpers::config::{merge_with_flags, Editor, NamedConfig};
-use crate::helpers::date::{date_for_header, date_from_daily_when, name_from_date, DailyWhen};
-use chrono::Datelike;
-use crate::helpers::output::{format_output, FileResult, OutputFormat};
+use crate::helpers::config::{Editor, NamedConfig, merge_with_flags};
+use crate::helpers::date::{DailyWhen, date_for_header, date_from_daily_when, name_from_date};
+use crate::helpers::output::{FileResult, OutputFormat, format_output};
 use crate::helpers::template::{get_template_content, update_template_variables};
 use crate::options::editor::editor_from_str;
+use chrono::Datelike;
 
 /// Arguments for the daily note command.
 #[derive(Args, Clone, Debug)]
@@ -73,7 +73,12 @@ pub fn run(args: DailyArgs) -> Result<(), Box<dyn std::error::Error>> {
     let result = FileResult {
         created: !file_exists,
         path: file_path.to_string_lossy().into_owned(),
-        date: format!("{:04}-{:02}-{:02}", date.year_ce().1, date.month(), date.day()),
+        date: format!(
+            "{:04}-{:02}-{:02}",
+            date.year_ce().1,
+            date.month(),
+            date.day()
+        ),
     };
 
     if merged.no_open {
@@ -95,7 +100,9 @@ impl Mergeable for DailyArgs {
     fn merge(self, config: &NamedConfig) -> Self {
         Self {
             notes_folder: self.notes_folder.or_else(|| config.notes_folder.clone()),
-            editor: self.editor.or_else(|| config.editor.as_ref().map(editor_to_string)),
+            editor: self
+                .editor
+                .or_else(|| config.editor.as_ref().map(editor_to_string)),
             template: self.template.or_else(|| config.template.clone()),
             ..self
         }
