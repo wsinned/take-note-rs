@@ -97,18 +97,11 @@ pub fn load_config_with_fallback(
     // Determine the effective section to use
     let section = if name != "default" {
         // Explicit --config flag was used, look up that section directly
-        let named_section = file.sections
-            .get(name)
-            .cloned()
-            .unwrap_or_default();
-        
+        let named_section = file.sections.get(name).cloned().unwrap_or_default();
+
         // Also merge with default for missing fields
-        let default_section = file
-            .sections
-            .get("default")
-            .cloned()
-            .unwrap_or_default();
-        
+        let default_section = file.sections.get("default").cloned().unwrap_or_default();
+
         let mut merged = named_section.clone();
         if merged.notes_folder.is_none() {
             merged.notes_folder = default_section.notes_folder.clone();
@@ -125,16 +118,10 @@ pub fn load_config_with_fallback(
         merged
     } else {
         // No --config flag, use command-specific section if available
-        let command_section = command_name
-            .and_then(|cmd| file.sections.get(cmd))
-            .cloned();
-        
-        let default_section = file
-            .sections
-            .get("default")
-            .cloned()
-            .unwrap_or_default();
-        
+        let command_section = command_name.and_then(|cmd| file.sections.get(cmd)).cloned();
+
+        let default_section = file.sections.get("default").cloned().unwrap_or_default();
+
         match command_section {
             Some(cmd) => {
                 // Merge command-specific with default: command wins for set fields,
@@ -302,14 +289,19 @@ template = "Templates/Daily.md"
         .unwrap();
 
         // Weekly should use [weekly] section merged with [default]
-        let weekly_cfg = load_config_with_fallback("default", Some("weekly"), Some(tmp.path())).unwrap();
+        let weekly_cfg =
+            load_config_with_fallback("default", Some("weekly"), Some(tmp.path())).unwrap();
         assert_eq!(weekly_cfg.notes_folder, Some("/tmp/notes".to_string()));
         assert_eq!(weekly_cfg.editor, Some(Editor::Obsidian));
-        assert_eq!(weekly_cfg.template, Some("Templates/Custom-Weekly.md".to_string()));
+        assert_eq!(
+            weekly_cfg.template,
+            Some("Templates/Custom-Weekly.md".to_string())
+        );
         assert_eq!(weekly_cfg.batch, Some(3));
 
         // Daily should use [daily] section merged with [default]
-        let daily_cfg = load_config_with_fallback("default", Some("daily"), Some(tmp.path())).unwrap();
+        let daily_cfg =
+            load_config_with_fallback("default", Some("daily"), Some(tmp.path())).unwrap();
         assert_eq!(daily_cfg.notes_folder, Some("/tmp/notes".to_string()));
         assert_eq!(daily_cfg.editor, Some(Editor::Obsidian));
         assert_eq!(daily_cfg.template, Some("Templates/Daily.md".to_string()));
@@ -331,7 +323,8 @@ template = "Templates/Weekly.md"
         .unwrap();
 
         // No [weekly] section, should fall back to [default]
-        let weekly_cfg = load_config_with_fallback("default", Some("weekly"), Some(tmp.path())).unwrap();
+        let weekly_cfg =
+            load_config_with_fallback("default", Some("weekly"), Some(tmp.path())).unwrap();
         assert_eq!(weekly_cfg.template, Some("Templates/Weekly.md".to_string()));
     }
 
