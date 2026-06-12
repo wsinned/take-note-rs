@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -31,13 +33,24 @@ jobs:
       - name: Run clippy
         run: cargo clippy -- -D warnings
 
-  build:
-    name: Build
+      - name: Conventional commit check
+        uses: wagoid/commitlint-github-action@v6
+        with:
+          failOnWarnings: true
+
+  bump-version:
+    name: Bump Version
     needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      old_version: ${{ steps.bump.outputs.old_version }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -45,11 +58,84 @@ jobs:
       - name: Cache cargo dependencies
         uses: Swatinem/rust-cache@v2
 
+      - name: Install cocogitto
+        run: cargo install cocogitto
+
+      - name: Bump version
+        id: bump
+        run: |
+          cog bump --auto
+          NEW_VERSION=$(cog get-version)
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Bumped to $NEW_VERSION"
+
+      - name: Push version bump and tag
+        run: |
+          git push origin main
+          git push origin --tags
+
+  build:
+    name: Build
+    needs: bump-version
+    if: github.ref == 'refs/heads/main'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset_name: take-note_linux_x86_64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            asset_name: take-note_linux_aarch64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            asset_name: take-note_darwin_x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            asset_name: take-note_darwin_aarch64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            asset_name: take-note_windows_x86_64.exe
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
       - name: Build release binary
-        run: cargo build --release
+        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: take-note-linux-x86_64
-          path: target/release/take-note
+          name: ${{ matrix.asset_name }}
+          path: target/${{ matrix.target }}/release/take-note${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+
+  release:
+    name: Create Release
+    needs: [build, bump-version]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.bump-version.outputs.new_version }}
+          name: Release ${{ needs.bump-version.outputs.new_version }}
+          files: artifacts/**/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
