@@ -1,8 +1,49 @@
-# take-note-rs
+# take-note
 
 A Rust CLI for creating and managing weekly and daily markdown notes. Drop-in replacement for the TypeScript/Deno version.
 
+## Why this exists
+
+I maintain weekly log files as part of my personal knowledge management system. Every Monday I need a new note with the correct filename (e.g. `2026-06-08-Weekly-log.md`) and a date header. Doing this manually is tedious and error-prone. This tool automates it — and adds daily notes, batch creation, config profiles, and headless mode for scripting.
+
 ## Installation
+
+### Recommended: eget (Linux/macOS)
+
+[eget](https://github.com/zyedidia/eget) installs pre-built binaries directly from GitHub releases.
+
+```bash
+# Install take-note (Linux x86_64)
+eget wsinned/take-note-rs --asset take-note_linux_x86_64 --to ~/.local/bin/take-note
+
+# macOS Apple Silicon
+eget wsinned/take-note-rs --asset take-note_darwin_aarch64 --to ~/.local/bin/take-note
+
+# macOS Intel
+eget wsinned/take-note-rs --asset take-note_darwin_x86_64 --to ~/.local/bin/take-note
+```
+
+To upgrade later, run the same command again.
+
+> Install eget itself: see [zyedidia/eget](https://github.com/zyedidia/eget)
+
+### Manual download
+
+Download the appropriate binary for your platform from the [releases page](https://github.com/wsinned/take-note-rs/releases):
+
+| Platform | Asset |
+|----------|-------|
+| Linux x86_64 | `take-note_linux_x86_64` |
+| Linux arm64 (e.g. Raspberry Pi) | `take-note_linux_aarch64` |
+| macOS Intel | `take-note_darwin_x86_64` |
+| macOS Apple Silicon | `take-note_darwin_aarch64` |
+| Windows x86_64 | `take-note_windows_x86_64.exe` |
+
+Make the binary executable and move it to your PATH:
+```bash
+chmod +x take-note_linux_x86_64
+mv take-note_linux_x86_64 ~/.local/bin/take-note
+```
 
 ### From source (requires Rust)
 
@@ -12,10 +53,6 @@ cd take-note-rs
 cargo build --release
 # Binary at target/release/take-note
 ```
-
-### Pre-built binaries
-
-Coming soon via GitHub releases.
 
 ---
 
