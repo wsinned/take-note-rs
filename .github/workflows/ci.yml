@@ -120,6 +120,8 @@ jobs:
             binary_name: take-note.exe
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.bump-version.outputs.new_version }}
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -128,6 +130,14 @@ jobs:
 
       - name: Cache cargo dependencies
         uses: Swatinem/rust-cache@v2
+
+      - name: Verify package version
+        shell: bash
+        env:
+          EXPECTED_VERSION: ${{ needs.bump-version.outputs.new_version }}
+        run: |
+          actual_version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "take-note") | .version')
+          test "$actual_version" = "$EXPECTED_VERSION"
 
       - name: Install cross-compilation tools
         if: matrix.target == 'aarch64-unknown-linux-gnu'
