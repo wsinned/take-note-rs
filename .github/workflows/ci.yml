@@ -69,6 +69,9 @@ jobs:
       - name: Install cocogitto
         run: cargo install cocogitto
 
+      - name: Install cargo-edit
+        run: cargo install cargo-edit
+
       - name: Configure Git author
         run: |
           git config user.name "github-actions[bot]"
@@ -177,8 +180,21 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: v${{ needs.bump-version.outputs.new_version }}
         run: |
-          asset_count=$(gh release view "$TAG" --json assets --jq '.assets | length')
-          test "$asset_count" -eq 5
+          expected_assets=$(printf '%s\n' \
+            take-note_darwin_aarch64 \
+            take-note_darwin_x86_64 \
+            take-note_linux_aarch64 \
+            take-note_linux_x86_64 \
+            take-note_windows_x86_64.exe)
+          actual_assets=$(gh release view "$TAG" --json assets --jq '.assets[].name' | sort)
+
+          if [[ "$actual_assets" != "$expected_assets" ]]; then
+            echo "Expected assets:"
+            echo "$expected_assets"
+            echo "Actual assets:"
+            echo "$actual_assets"
+            exit 1
+          fi
 
       - name: Publish GitHub Release
         env:
