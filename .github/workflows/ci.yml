@@ -161,12 +161,27 @@ jobs:
         with:
           path: artifacts
 
-      - name: Create GitHub Release
+      - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.bump-version.outputs.new_version }}
           name: Release v${{ needs.bump-version.outputs.new_version }}
           files: artifacts/**/*
           generate_release_notes: true
+          draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify draft release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ needs.bump-version.outputs.new_version }}
+        run: |
+          asset_count=$(gh release view "$TAG" --json assets --jq '.assets | length')
+          test "$asset_count" -eq 5
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ needs.bump-version.outputs.new_version }}
+        run: gh release edit "$TAG" --draft=false --latest
