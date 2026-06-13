@@ -4,7 +4,8 @@ branch_whitelist = ["main"]
 ignore_merge_commits = true
 
 pre_bump_hooks = [
-    "echo 'Bumping version to {{version}}'"
+    "echo 'Bumping version to {{version}}'",
+    "cargo set-version {{version}}"
 ]
 
 post_bump_hooks = [
