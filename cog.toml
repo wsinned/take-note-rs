@@ -1,15 +1,7 @@
-[commit_types]
-feat = { bump = "minor" }
-fix = { bump = "patch" }
-refactor = { bump = "patch" }
-perf = { bump = "patch" }
-style = { bump = "patch" }
-docs = { bump = "patch" }
-test = { bump = "patch" }
-chore = { bump = "patch" }
-ci = { bump = "patch" }
-build = { bump = "patch" }
-revert = { bump = "patch" }
+from_latest_tag = true
+tag_prefix = "v"
+branch_whitelist = ["main"]
+ignore_merge_commits = true
 
 pre_bump_hooks = [
     "echo 'Bumping version to {{version}}'"
@@ -19,3 +11,16 @@ post_bump_hooks = [
     "git push origin main",
     "git push origin --tags"
 ]
+
+[commit_types]
+feat = { bump_minor = true }
+fix = { bump_patch = true }
+refactor = { bump_patch = true }
+perf = { bump_patch = true }
+style = { bump_patch = true }
+docs = { bump_patch = true }
+test = { bump_patch = true }
+chore = { bump_patch = true }
+ci = { bump_patch = true }
+build = { bump_patch = true }
+revert = { bump_patch = true }
