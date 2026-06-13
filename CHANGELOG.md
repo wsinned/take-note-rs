@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.0.5 - 2026-06-13
+#### Bug Fixes
+- build release binaries from version tag - (3fc3f44) - Dennis Woodruff
+
+- - -
+
 ## v2.0.4 - 2026-06-13
 #### Bug Fixes
 - sync package version during releases - (2fe765a) - Dennis Woodruff
