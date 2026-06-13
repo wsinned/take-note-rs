@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.0.2 - 2026-06-13
+#### Bug Fixes
+- configure linux arm64 cross compilation - (28192e8) - Dennis Woodruff
+
+- - -
+
 ## v2.0.1 - 2026-06-13
 #### Bug Fixes
 - configure git identity for version bumps - (a2832d2) - Dennis Woodruff
