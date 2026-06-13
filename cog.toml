@@ -11,8 +11,11 @@ ci = { bump = "patch" }
 build = { bump = "patch" }
 revert = { bump = "patch" }
 
-[pre_bump_hooks]
-version = "echo 'Bumping version to {{version}}'"
+pre_bump_hooks = [
+    "echo 'Bumping version to {{version}}'"
+]
 
-[post_bump_hooks]
-git = "git push origin main && git push origin --tags"
+post_bump_hooks = [
+    "git push origin main",
+    "git push origin --tags"
+]
