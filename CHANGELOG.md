@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.0.4 - 2026-06-13
+#### Bug Fixes
+- sync package version during releases - (2fe765a) - Dennis Woodruff
+- verify assets before publishing releases - (c8c37ae) - Dennis Woodruff
+
+- - -
+
 ## v2.0.3 - 2026-06-13
 #### Bug Fixes
 - preserve platform names for release assets - (72034cb) - Dennis Woodruff
