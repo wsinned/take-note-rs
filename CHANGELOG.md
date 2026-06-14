@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.0.6 - 2026-06-14
+#### Miscellaneous Chores
+- (**ci**) use Node 24 release actions - (332cd32) - Dennis Woodruff
+
+- - -
+
 ## v2.0.5 - 2026-06-13
 #### Bug Fixes
 - build release binaries from version tag - (3fc3f44) - Dennis Woodruff
