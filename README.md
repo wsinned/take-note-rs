@@ -99,8 +99,8 @@ Without `--config`, commands use their own section (`[weekly]` or `[daily]`) if 
 ## Usage
 
 ```
-take-note weekly [OPTIONS]
-take-note daily [OPTIONS]
+take-note weekly [OPTIONS] <WHEN> [APPEND]
+take-note daily [OPTIONS] <WHEN> [APPEND]
 take-note --help
 take-note --version
 ```
@@ -108,9 +108,10 @@ take-note --version
 ### Weekly notes
 
 ```bash
-take-note weekly --when thisWeek
-take-note weekly --when thisWeek --config work
-take-note weekly --when thisWeek --editor vscode
+take-note weekly thisWeek
+take-note weekly thisWeek --config work
+take-note weekly thisWeek --editor vscode
+take-note weekly thisWeek "- Shipped append mode"
 ```
 
 ### `--when` options (weekly)
@@ -124,7 +125,8 @@ take-note weekly --when thisWeek --editor vscode
 ### Daily notes
 
 ```bash
-take-note daily --when today
+take-note daily today
+take-note daily today "- Follow up on invoices"
 ```
 
 ### `--when` options (daily)
@@ -140,21 +142,23 @@ take-note daily --when today
 Supply a template path relative to `notesFolder`. The placeholder `{{date}}` is replaced with the note date formatted as `Monday 28 July 2025`.
 
 ```bash
-take-note weekly --when thisWeek --template Templates/weekly-template.md
+take-note weekly thisWeek --template Templates/weekly-template.md
 ```
 
 ### Headless / automation mode
 
 ```bash
 # Text output (default)
-take-note weekly --when thisWeek --noOpen
+take-note weekly thisWeek --noOpen
 
 # JSON output
-take-note weekly --when thisWeek --noOpen --format json
+take-note weekly thisWeek --noOpen --format json
 
 # Silent (exit code only)
-take-note weekly --when thisWeek --noOpen --format silent
+take-note weekly thisWeek --noOpen --format silent
 ```
+
+Append mode is always headless. It creates the resolved note if missing, appends the supplied blob, and prints only the target file path on success.
 
 ---
 
@@ -196,4 +200,4 @@ src/
 - [x] Named configs
 - [x] Batch creation (`--batch N`)
 - [ ] `take-note init` setup wizard
-- [ ] Append mode (`--append "text"`)
+- [x] Append mode (`take-note daily today "text"`)

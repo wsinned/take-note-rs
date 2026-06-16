@@ -15,8 +15,16 @@ use chrono::Datelike;
 #[derive(Args, Clone, Debug)]
 pub struct WeeklyArgs {
     /// Which week's note to open
-    #[arg(long, value_name = "WHEN")]
-    when: String,
+    #[arg(value_name = "WHEN")]
+    when: Option<String>,
+
+    /// Blob to append to the resolved note without opening an editor
+    #[arg(value_name = "APPEND", allow_hyphen_values = true)]
+    append: Option<String>,
+
+    /// Which week's note to open
+    #[arg(long = "when", value_name = "WHEN")]
+    when_flag: Option<String>,
 
     /// Named config section to use from ~/.config/take-note/config.toml
     #[arg(long, value_name = "NAME")]
@@ -57,12 +65,17 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
         .notes_folder
         .ok_or("notesFolder is required. Set it in ~/.config/take-note/config.toml or pass --notes-folder.")?;
 
-    let batch_size = merged.batch.unwrap_or(1);
+    let batch_size = if merged.append.is_some() {
+        1
+    } else {
+        merged.batch.unwrap_or(1)
+    };
     if !(1..=8).contains(&batch_size) {
         return Err("batch size must be between 1 and 8".into());
     }
 
-    let when = When::from_str(&merged.when)?;
+    let when = resolve_when(merged.when.as_deref(), merged.when_flag.as_deref())?;
+    let when = When::from_str(when)?;
     let start_date = date_from_when(chrono::Local::now().naive_local().date(), when);
     let dates = get_batch_dates(start_date, batch_size);
 
@@ -97,6 +110,13 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
         });
     }
 
+    if let Some(blob) = merged.append.as_deref() {
+        let path = &results[0].path;
+        crate::commands::append_blob_atomic(std::path::Path::new(path), blob)?;
+        println!("{}", path);
+        return Ok(());
+    }
+
     if merged.no_open {
         let format = parse_format(merged.format.as_deref())?;
         if let Some(output) = format_output(&results, format) {
@@ -124,6 +144,17 @@ impl Mergeable for WeeklyArgs {
             batch: self.batch.or(config.batch),
             ..self
         }
+    }
+}
+
+fn resolve_when<'a>(
+    positional: Option<&'a str>,
+    flag: Option<&'a str>,
+) -> Result<&'a str, Box<dyn std::error::Error>> {
+    match (positional, flag) {
+        (Some(_), Some(_)) => Err("pass WHEN either positionally or with --when, not both".into()),
+        (Some(value), None) | (None, Some(value)) => Ok(value),
+        (None, None) => Err("WHEN is required".into()),
     }
 }
 
