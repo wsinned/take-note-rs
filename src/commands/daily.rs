@@ -2,7 +2,7 @@ use clap::Args;
 use std::path::PathBuf;
 
 use crate::handlers::open_with_editor;
-use crate::helpers::config::{Editor, NamedConfig, merge_with_flags};
+use crate::helpers::config::{Editor, Mergeable, NamedConfig, merge_with_flags};
 use crate::helpers::date::{DailyWhen, date_for_header, date_from_daily_when, name_from_date};
 use crate::helpers::output::{FileResult, OutputFormat, format_output};
 use crate::helpers::template::{get_template_content, update_template_variables};
@@ -132,8 +132,6 @@ fn parse_editor(s: Option<&str>) -> Result<Editor, Box<dyn std::error::Error>> {
         None => Ok(Editor::Generic),
     }
 }
-
-use crate::helpers::config::Mergeable;
 
 #[cfg(test)]
 mod tests {
