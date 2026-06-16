@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.0.7 - 2026-06-16
+#### Miscellaneous Chores
+- tidy low-risk code nits - (be65b2b) - Dennis Woodruff
+
+- - -
+
 ## v2.0.6 - 2026-06-14
 #### Miscellaneous Chores
 - (**ci**) use Node 24 release actions - (332cd32) - Dennis Woodruff
