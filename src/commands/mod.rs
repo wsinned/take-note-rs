@@ -22,44 +22,14 @@ fn write_atomic(path: &Path, content: &[u8]) -> std::io::Result<()> {
         .and_then(|name| name.to_str())
         .unwrap_or("take-note");
 
-    let mut last_error = None;
+    let mut temp_file = tempfile::Builder::new()
+        .prefix(&format!(".{file_name}.tmp."))
+        .tempfile_in(parent)?;
 
-    for attempt in 0..100 {
-        let temp_path = parent.join(format!(
-            ".{file_name}.tmp.{}.{}",
-            std::process::id(),
-            attempt
-        ));
+    temp_file.write_all(content)?;
+    temp_file.as_file().sync_all()?;
 
-        let file = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&temp_path);
-
-        let mut file = match file {
-            Ok(file) => file,
-            Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => {
-                last_error = Some(err);
-                continue;
-            }
-            Err(err) => return Err(err),
-        };
-
-        if let Err(err) = file.write_all(content).and_then(|_| file.sync_all()) {
-            let _ = std::fs::remove_file(&temp_path);
-            return Err(err);
-        }
-
-        drop(file);
-        if let Err(err) = std::fs::rename(&temp_path, path) {
-            let _ = std::fs::remove_file(&temp_path);
-            return Err(err);
-        }
-
-        return Ok(());
-    }
-
-    Err(last_error.unwrap_or_else(|| std::io::Error::other("could not create temporary file")))
+    temp_file.persist(path).map(|_| ()).map_err(|err| err.error)
 }
 
 #[cfg(test)]
