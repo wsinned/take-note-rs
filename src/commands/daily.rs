@@ -13,8 +13,16 @@ use chrono::Datelike;
 #[derive(Args, Clone, Debug)]
 pub struct DailyArgs {
     /// Which day's note to open
-    #[arg(long, value_name = "WHEN")]
-    when: String,
+    #[arg(value_name = "WHEN")]
+    when: Option<String>,
+
+    /// Blob to append to the resolved note without opening an editor
+    #[arg(value_name = "APPEND", allow_hyphen_values = true)]
+    append: Option<String>,
+
+    /// Which day's note to open
+    #[arg(long = "when", value_name = "WHEN")]
+    when_flag: Option<String>,
 
     /// Named config section to use from ~/.config/take-note/config.toml
     #[arg(long, value_name = "NAME")]
@@ -51,7 +59,8 @@ pub fn run(args: DailyArgs) -> Result<(), Box<dyn std::error::Error>> {
         .notes_folder
         .ok_or("notesFolder is required. Set it in ~/.config/take-note/config.toml or pass --notes-folder.")?;
 
-    let when = DailyWhen::from_str(&merged.when)?;
+    let when = resolve_when(merged.when.as_deref(), merged.when_flag.as_deref())?;
+    let when = DailyWhen::from_str(when)?;
     let date = date_from_daily_when(chrono::Local::now().naive_local().date(), when);
 
     const SUFFIX: &str = "Daily-log";
@@ -81,6 +90,12 @@ pub fn run(args: DailyArgs) -> Result<(), Box<dyn std::error::Error>> {
         ),
     };
 
+    if let Some(blob) = merged.append.as_deref() {
+        crate::commands::append_blob_atomic(&file_path, blob)?;
+        println!("{}", result.path);
+        return Ok(());
+    }
+
     if merged.no_open {
         let format = parse_format(merged.format.as_deref())?;
         if let Some(output) = format_output(&[result], format) {
@@ -106,6 +121,17 @@ impl Mergeable for DailyArgs {
             template: self.template.or_else(|| config.template.clone()),
             ..self
         }
+    }
+}
+
+fn resolve_when<'a>(
+    positional: Option<&'a str>,
+    flag: Option<&'a str>,
+) -> Result<&'a str, Box<dyn std::error::Error>> {
+    match (positional, flag) {
+        (Some(_), Some(_)) => Err("pass WHEN either positionally or with --when, not both".into()),
+        (Some(value), None) | (None, Some(value)) => Ok(value),
+        (None, None) => Err("WHEN is required".into()),
     }
 }
 
