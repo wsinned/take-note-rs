@@ -2,7 +2,7 @@ use clap::Args;
 use std::path::PathBuf;
 
 use crate::handlers::open_with_editor;
-use crate::helpers::config::{Editor, NamedConfig, merge_with_flags};
+use crate::helpers::config::{Editor, Mergeable, NamedConfig, merge_with_flags};
 use crate::helpers::date::{
     When, date_for_header, date_from_when, get_batch_dates, name_from_date,
 };
@@ -150,8 +150,6 @@ fn parse_editor(s: Option<&str>) -> Result<Editor, Box<dyn std::error::Error>> {
         None => Ok(Editor::Generic),
     }
 }
-
-use crate::helpers::config::Mergeable;
 
 #[cfg(test)]
 mod tests {

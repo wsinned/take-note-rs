@@ -8,7 +8,7 @@ mod options;
 
 use commands::daily::DailyArgs;
 use commands::weekly::WeeklyArgs;
-// Config loaded per-command
+// Configuration is loaded per-command inside the subcommand modules.
 
 /// A CLI for creating and managing weekly and daily markdown notes
 #[derive(Parser)]

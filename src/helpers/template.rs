@@ -115,7 +115,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let template_path = dir.path().join("template.md");
         let mut file = std::fs::File::create(&template_path).unwrap();
-        write!(file, "# W/C {{{{date}}}}\n").unwrap();
+        writeln!(file, "# W/C {{{{date}}}}").unwrap();
 
         let result =
             get_template_content(dir.path().to_str().unwrap(), Some("template.md")).unwrap();
