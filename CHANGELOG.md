@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.1.0 - 2026-06-16
+#### Features
+- add headless append mode - (9f4738c) - Dennis Woodruff
+#### Bug Fixes
+- use standard temp file persistence - (2b39789) - Dennis Woodruff
+
+- - -
+
 ## v2.0.7 - 2026-06-16
 #### Miscellaneous Chores
 - tidy low-risk code nits - (be65b2b) - Dennis Woodruff
