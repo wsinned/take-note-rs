@@ -199,5 +199,6 @@ src/
 - [x] Config file support
 - [x] Named configs
 - [x] Batch creation (`--batch N`)
-- [ ] `take-note init` setup wizard
+- [ ] Insert mode with heading locators
 - [x] Append mode (`take-note daily today "text"`)
+- [ ] `take-note init` setup wizard
