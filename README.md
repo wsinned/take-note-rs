@@ -210,4 +210,5 @@ src/
 - [x] Named configs
 - [x] Batch creation (`--batch N`)
 - [x] `take-note init` setup wizard
+- [ ] Insert mode with heading locators
 - [x] Append mode (`take-note daily today "text"`)
