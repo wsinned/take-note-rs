@@ -25,6 +25,11 @@ Runs before each commit:
 - `cargo clippy -- -D warnings`
 - `cargo test --all-features`
 
+### commit-msg
+
+Runs after the commit message is entered:
+- Enforces conventional commit subjects like `feat:`, `fix:`, `chore:`, etc.
+
 ### pre-push
 
 Runs before each push:
