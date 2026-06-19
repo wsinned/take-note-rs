@@ -112,6 +112,7 @@ take-note weekly thisWeek
 take-note weekly thisWeek --config work
 take-note weekly thisWeek --editor vscode
 take-note weekly thisWeek "- Shipped append mode"
+take-note weekly thisWeek --insert "Weekly Log/Monday" "- Shipped insert mode"
 ```
 
 ### `--when` options (weekly)
@@ -127,6 +128,7 @@ take-note weekly thisWeek "- Shipped append mode"
 ```bash
 take-note daily today
 take-note daily today "- Follow up on invoices"
+take-note daily today --insert "Daily Log/Notes" "- Follow up on invoices"
 ```
 
 ### `--when` options (daily)
@@ -158,7 +160,7 @@ take-note weekly thisWeek --noOpen --format json
 take-note weekly thisWeek --noOpen --format silent
 ```
 
-Append mode is always headless. It creates the resolved note if missing, appends the supplied blob, and prints only the target file path on success.
+Append and insert modes are always headless. They create the resolved note if missing and print only the target file path on success. Use `--insert HEADING/SUBHEADING` to place the supplied blob at the end of a matching markdown heading path instead of appending to the file.
 
 ---
 
@@ -182,6 +184,7 @@ src/
     config.rs          # TOML config loading
     date.rs            # Date calculations
     output.rs          # Format output for --noOpen
+    markdown.rs        # Markdown heading helpers
     template.rs        # Template loading & variable replacement
   handlers/
     mod.rs             # Editor integrations (obsidian, vscode, generic)
@@ -199,6 +202,6 @@ src/
 - [x] Config file support
 - [x] Named configs
 - [x] Batch creation (`--batch N`)
-- [ ] Insert mode with heading locators
+- [x] Insert mode with heading locators
 - [x] Append mode (`take-note daily today "text"`)
 - [ ] `take-note init` setup wizard

@@ -22,6 +22,10 @@ pub struct WeeklyArgs {
     #[arg(value_name = "APPEND", allow_hyphen_values = true)]
     append: Option<String>,
 
+    /// Insert APPEND at the end of a heading path, separated with '/'
+    #[arg(long, value_name = "HEADING_PATH")]
+    insert: Option<String>,
+
     /// Which week's note to open
     #[arg(long = "when", value_name = "WHEN")]
     when_flag: Option<String>,
@@ -64,6 +68,10 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
     let notes_folder = merged
         .notes_folder
         .ok_or("notesFolder is required. Set it in ~/.config/take-note/config.toml or pass --notes-folder.")?;
+
+    if merged.insert.is_some() && merged.append.is_none() {
+        return Err("--insert requires APPEND content".into());
+    }
 
     let batch_size = if merged.append.is_some() {
         1
@@ -112,7 +120,15 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(blob) = merged.append.as_deref() {
         let path = &results[0].path;
-        crate::commands::append_blob_atomic(std::path::Path::new(path), blob)?;
+        if let Some(heading_path) = merged.insert.as_deref() {
+            crate::commands::insert_blob_at_heading_path_atomic(
+                std::path::Path::new(path),
+                heading_path,
+                blob,
+            )?;
+        } else {
+            crate::commands::append_blob_atomic(std::path::Path::new(path), blob)?;
+        }
         println!("{}", path);
         return Ok(());
     }

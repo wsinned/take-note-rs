@@ -20,6 +20,10 @@ pub struct DailyArgs {
     #[arg(value_name = "APPEND", allow_hyphen_values = true)]
     append: Option<String>,
 
+    /// Insert APPEND at the end of a heading path, separated with '/'
+    #[arg(long, value_name = "HEADING_PATH")]
+    insert: Option<String>,
+
     /// Which day's note to open
     #[arg(long = "when", value_name = "WHEN")]
     when_flag: Option<String>,
@@ -59,6 +63,10 @@ pub fn run(args: DailyArgs) -> Result<(), Box<dyn std::error::Error>> {
         .notes_folder
         .ok_or("notesFolder is required. Set it in ~/.config/take-note/config.toml or pass --notes-folder.")?;
 
+    if merged.insert.is_some() && merged.append.is_none() {
+        return Err("--insert requires APPEND content".into());
+    }
+
     let when = resolve_when(merged.when.as_deref(), merged.when_flag.as_deref())?;
     let when = DailyWhen::from_str(when)?;
     let date = date_from_daily_when(chrono::Local::now().naive_local().date(), when);
@@ -91,7 +99,11 @@ pub fn run(args: DailyArgs) -> Result<(), Box<dyn std::error::Error>> {
     };
 
     if let Some(blob) = merged.append.as_deref() {
-        crate::commands::append_blob_atomic(&file_path, blob)?;
+        if let Some(heading_path) = merged.insert.as_deref() {
+            crate::commands::insert_blob_at_heading_path_atomic(&file_path, heading_path, blob)?;
+        } else {
+            crate::commands::append_blob_atomic(&file_path, blob)?;
+        }
         println!("{}", result.path);
         return Ok(());
     }
