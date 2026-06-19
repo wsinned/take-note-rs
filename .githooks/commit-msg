@@ -1,0 +1,29 @@
+#!/bin/bash
+# Commit-msg hook: enforce conventional commit subject lines.
+
+set -euo pipefail
+
+message_file="${1:-}"
+
+if [ -z "$message_file" ] || [ ! -f "$message_file" ]; then
+    echo "commit-msg hook: missing commit message file" >&2
+    exit 1
+fi
+
+subject="$(sed -n '1{s/\r$//;p;q;}' "$message_file")"
+
+# Allow Git's generated merge commits to pass through untouched.
+if [[ "$subject" == Merge\ * ]]; then
+    exit 0
+fi
+
+if ! printf '%s\n' "$subject" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?!?: .+'; then
+    cat >&2 <<'EOF'
+commit-msg hook: commit subject must follow conventional commits
+Expected examples:
+  feat: add markdown heading helper
+  fix(parser): handle empty input
+  chore!: drop legacy config support
+EOF
+    exit 1
+fi
