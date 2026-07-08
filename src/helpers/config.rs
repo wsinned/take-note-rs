@@ -6,6 +6,9 @@ use thiserror::Error;
 /// Path to the default config file.
 pub const CONFIG_PATH: &str = ".config/take-note/config.toml";
 
+/// Valid range for the batch size field.
+pub const BATCH_SIZE_RANGE: std::ops::RangeInclusive<usize> = 1..=8;
+
 /// Supported editor types.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -19,7 +22,7 @@ pub enum Editor {
 /// Configuration for a single named profile.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq)]
 pub struct NamedConfig {
-    #[serde(alias = "notesFolder")]
+    #[serde(rename = "notesFolder")]
     pub notes_folder: Option<String>,
     pub editor: Option<Editor>,
     pub template: Option<String>,
@@ -170,7 +173,7 @@ fn default_config_path() -> PathBuf {
 }
 
 /// Expands a leading `~` to the user's home directory.
-fn expand_home(value: &str) -> String {
+pub fn expand_home(value: &str) -> String {
     if let Some(rest) = value.strip_prefix("~/") {
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
         home.join(rest).to_string_lossy().into_owned()
@@ -219,12 +222,12 @@ mod tests {
             tmp,
             r#"
 [default]
-notes_folder = "/tmp/notes"
+notesFolder = "/tmp/notes"
 editor = "obsidian"
 batch = 3
 
 [work]
-notes_folder = "/tmp/work"
+notesFolder = "/tmp/work"
 editor = "vscode"
 "#
         )
@@ -258,7 +261,7 @@ editor = "vscode"
             tmp,
             r#"
 [default]
-notes_folder = "/tmp/notes"
+notesFolder = "/tmp/notes"
 "#
         )
         .unwrap();
@@ -274,7 +277,7 @@ notes_folder = "/tmp/notes"
             tmp,
             r#"
 [default]
-notes_folder = "/tmp/notes"
+notesFolder = "/tmp/notes"
 editor = "obsidian"
 template = "Templates/Weekly.md"
 batch = 3
@@ -315,7 +318,7 @@ template = "Templates/Daily.md"
             tmp,
             r#"
 [default]
-notes_folder = "/tmp/notes"
+notesFolder = "/tmp/notes"
 editor = "obsidian"
 template = "Templates/Weekly.md"
 "#
@@ -335,7 +338,7 @@ template = "Templates/Weekly.md"
             tmp,
             r#"
 [default]
-notes_folder = "/tmp/notes"
+notesFolder = "/tmp/notes"
 editor = "obsidian"
 template = "Templates/Weekly.md"
 
@@ -343,7 +346,7 @@ template = "Templates/Weekly.md"
 template = "Templates/Custom-Weekly.md"
 
 [custom]
-notes_folder = "/tmp/custom"
+notesFolder = "/tmp/custom"
 editor = "vscode"
 "#
         )
