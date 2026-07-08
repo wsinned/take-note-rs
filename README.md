@@ -94,6 +94,8 @@ Select with `--config work`.
 
 Without `--config`, commands use their own section (`[weekly]` or `[daily]`) if it exists, then fall back to `[default]`. This lets you set command-specific defaults (e.g. different templates for weekly vs daily) without specifying `--config` every time.
 
+> `default` is reserved as the base config and cannot be passed to `--config`. Use it only as a fallback layer in your config file.
+
 ---
 
 ## Usage
@@ -101,6 +103,7 @@ Without `--config`, commands use their own section (`[weekly]` or `[daily]`) if 
 ```
 take-note weekly [OPTIONS] <WHEN> [APPEND]
 take-note daily [OPTIONS] <WHEN> [APPEND]
+take-note init
 take-note --help
 take-note --version
 ```
@@ -149,13 +152,13 @@ take-note weekly thisWeek --template Templates/weekly-template.md
 
 ```bash
 # Text output (default)
-take-note weekly thisWeek --noOpen
+take-note weekly thisWeek --no-open
 
 # JSON output
-take-note weekly thisWeek --noOpen --format json
+take-note weekly thisWeek --no-open --format json
 
 # Silent (exit code only)
-take-note weekly thisWeek --noOpen --format silent
+take-note weekly thisWeek --no-open --format silent
 ```
 
 Append mode is always headless. It creates the resolved note if missing, appends the supplied blob, and prints only the target file path on success.
@@ -178,10 +181,11 @@ src/
   commands/
     weekly.rs          # Weekly notes command
     daily.rs           # Daily notes command
+    init.rs            # Interactive setup wizard
   helpers/
     config.rs          # TOML config loading
     date.rs            # Date calculations
-    output.rs          # Format output for --noOpen
+    output.rs          # Format output for --no-open
     template.rs        # Template loading & variable replacement
   handlers/
     mod.rs             # Editor integrations (obsidian, vscode, generic)
@@ -195,9 +199,9 @@ src/
 
 - [x] Weekly notes
 - [x] Daily notes
-- [x] Headless mode (`--noOpen`, `--format`)
+- [x] Headless mode (`--no-open`, `--format`)
 - [x] Config file support
 - [x] Named configs
 - [x] Batch creation (`--batch N`)
-- [ ] `take-note init` setup wizard
+- [x] `take-note init` setup wizard
 - [x] Append mode (`take-note daily today "text"`)
