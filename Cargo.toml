@@ -1,6 +1,6 @@
 [package]
 name = "take-note"
-version = "2.1.0"
+version = "2.2.0"
 edition = "2024"
 authors = ["Dennis Woodruff <denniswoodruffuk@gmail.com>"]
 description = "A CLI for creating and managing weekly and daily markdown notes"

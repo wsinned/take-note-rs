@@ -2,6 +2,22 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.2.0 - 2026-07-08
+#### Features
+- add take-note init setup wizard - (2255264) - Dennis Woodruff, *Claude Sonnet 4.6*
+#### Bug Fixes
+- replace results[0] with results.first() to make invariant explicit - (b1cbde9) - Dennis Woodruff, *Claude Sonnet 4.6*
+- reject --config default with a clear error message - (89e24cb) - Dennis Woodruff, *Claude Sonnet 4.6*
+- warn on stderr when editor binary cannot be launched - (5dee8fe) - Dennis Woodruff, *Claude Sonnet 4.6*
+- percent-encode file path in Obsidian URI - (0777e0c) - Dennis Woodruff, *Claude Sonnet 4.6*
+#### Documentation
+- add git hooks setup instructions to Development section - (6c8e168) - Dennis Woodruff, *Claude Sonnet 4.6*
+- sync README with current implementation - (8389515) - Dennis Woodruff, *Claude Sonnet 4.6*
+#### Refactoring
+- extract merge_over_default to eliminate duplicated merge logic - (d4d0a1f) - Dennis Woodruff, *Claude Sonnet 4.6*
+
+- - -
+
 ## v2.1.0 - 2026-06-16
 #### Features
 - add headless append mode - (9f4738c) - Dennis Woodruff
