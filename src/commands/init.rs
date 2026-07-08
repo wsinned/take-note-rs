@@ -55,8 +55,8 @@ pub fn run() -> Result<(), InitError> {
 
     // --- pre-flight ---
     let mut doc = if config_path.exists() {
-        let raw = std::fs::read_to_string(&config_path)
-            .map_err(|e| InitError::Other(e.to_string()))?;
+        let raw =
+            std::fs::read_to_string(&config_path).map_err(|e| InitError::Other(e.to_string()))?;
 
         match raw.parse::<DocumentMut>() {
             Err(parse_err) => {
@@ -127,23 +127,22 @@ fn run_preflight_fixes(
         let Some(table) = item.as_table() else {
             continue;
         };
-        if let Some(editor_item) = table.get(EDITOR_KEY) {
-            if let Some(s) = editor_item.as_str() {
-                if !EDITOR_OPTIONS.contains(&s) {
-                    issues.push(format!(
-                        "[{section_name}].{EDITOR_KEY}: unknown value \"{s}\""
-                    ));
-                }
-            }
+        if let Some(editor_item) = table.get(EDITOR_KEY)
+            && let Some(s) = editor_item.as_str()
+            && !EDITOR_OPTIONS.contains(&s)
+        {
+            issues.push(format!(
+                "[{section_name}].{EDITOR_KEY}: unknown value \"{s}\""
+            ));
         }
-        if let Some(folder_item) = table.get(NOTES_FOLDER_KEY) {
-            if let Some(s) = folder_item.as_str() {
-                let expanded = expand_home(s);
-                if !Path::new(&expanded).exists() {
-                    issues.push(format!(
-                        "[{section_name}].{NOTES_FOLDER_KEY}: path \"{s}\" does not exist"
-                    ));
-                }
+        if let Some(folder_item) = table.get(NOTES_FOLDER_KEY)
+            && let Some(s) = folder_item.as_str()
+        {
+            let expanded = expand_home(s);
+            if !Path::new(&expanded).exists() {
+                issues.push(format!(
+                    "[{section_name}].{NOTES_FOLDER_KEY}: path \"{s}\" does not exist"
+                ));
             }
         }
     }
@@ -176,19 +175,18 @@ fn run_preflight_fixes(
         };
 
         // Fix invalid editor
-        if let Some(editor_item) = table.get(EDITOR_KEY) {
-            if let Some(s) = editor_item.as_str() {
-                if !EDITOR_OPTIONS.contains(&s) {
-                    let idx = map_prompt(
-                        Select::new()
-                            .with_prompt(format!("Fix [{section_name}].{EDITOR_KEY}"))
-                            .items(EDITOR_OPTIONS)
-                            .default(0)
-                            .interact(),
-                    )?;
-                    table[EDITOR_KEY] = toml_edit::value(EDITOR_OPTIONS[idx]);
-                }
-            }
+        if let Some(editor_item) = table.get(EDITOR_KEY)
+            && let Some(s) = editor_item.as_str()
+            && !EDITOR_OPTIONS.contains(&s)
+        {
+            let idx = map_prompt(
+                Select::new()
+                    .with_prompt(format!("Fix [{section_name}].{EDITOR_KEY}"))
+                    .items(EDITOR_OPTIONS)
+                    .default(0)
+                    .interact(),
+            )?;
+            table[EDITOR_KEY] = toml_edit::value(EDITOR_OPTIONS[idx]);
         }
 
         // Fix invalid notesFolder
@@ -534,7 +532,10 @@ mod tests {
         assert!(toml.contains("obsidian"));
         assert!(toml.contains("Templates/Weekly.md"));
         assert!(toml.contains("batch = 3"));
-        assert!(!toml.contains("notes_folder"), "must not use snake_case key");
+        assert!(
+            !toml.contains("notes_folder"),
+            "must not use snake_case key"
+        );
     }
 
     #[test]
@@ -593,12 +594,18 @@ mod tests {
 
         // [default] must be unchanged
         let default_cfg = load_config("default", Some(&config_path)).unwrap();
-        assert_eq!(default_cfg.editor, Some(crate::helpers::config::Editor::Generic));
+        assert_eq!(
+            default_cfg.editor,
+            Some(crate::helpers::config::Editor::Generic)
+        );
         assert_eq!(default_cfg.batch, Some(1));
 
         // [weekly] must reflect new values
         let weekly_cfg = load_config("weekly", Some(&config_path)).unwrap();
-        assert_eq!(weekly_cfg.editor, Some(crate::helpers::config::Editor::Vscode));
+        assert_eq!(
+            weekly_cfg.editor,
+            Some(crate::helpers::config::Editor::Vscode)
+        );
         assert_eq!(weekly_cfg.batch, Some(4));
     }
 }

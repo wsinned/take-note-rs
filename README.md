@@ -167,6 +167,12 @@ Append mode is always headless. It creates the resolved note if missing, appends
 
 ## Development
 
+After cloning, configure git to use the repo's hooks (runs fmt, clippy, and tests before each commit):
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ```bash
 cargo test        # Run all tests (including doc tests)
 cargo build       # Debug build
