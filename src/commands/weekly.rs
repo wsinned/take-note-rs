@@ -57,6 +57,9 @@ pub struct WeeklyArgs {
 
 /// Run the weekly note command.
 pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
+    if args.config.as_deref() == Some("default") {
+        return Err("'default' is reserved as the base config; pass a named section instead, e.g. --config work".into());
+    }
     let config_name = args.config.as_deref().unwrap_or("default");
     let cfg = crate::helpers::config::load_config_with_fallback(config_name, Some("weekly"), None)?;
     let merged = merge_with_flags(&cfg, args);
@@ -200,5 +203,26 @@ mod tests {
         assert_eq!(parse_editor(Some("obsidian")).unwrap(), Editor::Obsidian);
         assert_eq!(parse_editor(Some("vscode")).unwrap(), Editor::Vscode);
         assert_eq!(parse_editor(None).unwrap(), Editor::Generic);
+    }
+
+    #[test]
+    fn rejects_config_named_default() {
+        let err = run(WeeklyArgs {
+            when: Some("thisWeek".to_string()),
+            append: None,
+            when_flag: None,
+            config: Some("default".to_string()),
+            notes_folder: None,
+            editor: None,
+            template: None,
+            batch: None,
+            no_open: false,
+            format: None,
+        })
+        .unwrap_err();
+        assert!(
+            err.to_string().contains("reserved"),
+            "expected 'reserved' in error message, got: {err}"
+        );
     }
 }
