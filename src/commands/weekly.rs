@@ -114,7 +114,7 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if let Some(blob) = merged.append.as_deref() {
-        let path = &results[0].path;
+        let path = &results.first().ok_or("internal error: no dates resolved")?.path;
         crate::commands::append_blob_atomic(std::path::Path::new(path), blob)?;
         println!("{}", path);
         return Ok(());
@@ -129,7 +129,7 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let editor = parse_editor(merged.editor.as_deref())?;
-    let first_file = &results[0].path;
+    let first_file = &results.first().ok_or("internal error: no dates resolved")?.path;
     println!("Opening {} with {:?}", first_file, editor);
     open_with_editor(&editor, first_file);
 
