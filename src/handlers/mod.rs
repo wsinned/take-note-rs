@@ -1,9 +1,11 @@
 use crate::helpers::config::Editor;
+use std::io::Write;
 use std::process::Command;
 
 /// Opens a file with the appropriate editor handler.
 ///
 /// Spawns the editor process and returns immediately (does not wait).
+/// Prints a warning to stderr if the editor binary cannot be launched.
 ///
 /// # Examples
 ///
@@ -23,17 +25,23 @@ pub fn open_with_editor(editor: &Editor, file_path: &str) {
 
 fn open_generic(file_path: &str) {
     let editor = std::env::var("EDITOR").unwrap_or_else(|_| "vi".to_string());
-    let _ = Command::new(&editor).arg(file_path).spawn();
+    spawn_with_stderr(&editor, file_path, &mut std::io::stderr());
 }
 
 fn open_vscode(file_path: &str) {
-    let _ = Command::new("code").arg(file_path).spawn();
+    spawn_with_stderr("code", file_path, &mut std::io::stderr());
 }
 
 fn open_obsidian(file_path: &str) {
     let url = obsidian_url(file_path);
     let open_cmd = get_open_command();
-    let _ = Command::new(open_cmd).arg(&url).spawn();
+    spawn_with_stderr(open_cmd, &url, &mut std::io::stderr());
+}
+
+fn spawn_with_stderr(program: &str, arg: &str, stderr: &mut dyn Write) {
+    if let Err(e) = Command::new(program).arg(arg).spawn() {
+        let _ = writeln!(stderr, "warning: could not open '{program}': {e}");
+    }
 }
 
 fn obsidian_url(file_path: &str) -> String {
@@ -64,6 +72,16 @@ mod tests {
         let cmd = get_open_command();
         // Just verify it returns a non-empty string
         assert!(!cmd.is_empty());
+    }
+
+    #[test]
+    fn spawn_reports_error_when_binary_not_found() {
+        let mut buf = Vec::<u8>::new();
+        spawn_with_stderr("__no_such_binary_xyz__", "/any/path", &mut buf);
+        assert!(
+            !buf.is_empty(),
+            "expected a warning on stderr when binary is not found, but got nothing"
+        );
     }
 
     #[test]
