@@ -97,53 +97,18 @@ pub fn load_config_with_fallback(
         }
     };
 
+    let default_section = file.sections.get("default").cloned().unwrap_or_default();
+
     // Determine the effective section to use
     let section = if name != "default" {
         // Explicit --config flag was used, look up that section directly
         let named_section = file.sections.get(name).cloned().unwrap_or_default();
-
-        // Also merge with default for missing fields
-        let default_section = file.sections.get("default").cloned().unwrap_or_default();
-
-        let mut merged = named_section.clone();
-        if merged.notes_folder.is_none() {
-            merged.notes_folder = default_section.notes_folder.clone();
-        }
-        if merged.editor.is_none() {
-            merged.editor = default_section.editor.clone();
-        }
-        if merged.template.is_none() {
-            merged.template = default_section.template.clone();
-        }
-        if merged.batch.is_none() {
-            merged.batch = default_section.batch;
-        }
-        merged
+        merge_over_default(named_section, &default_section)
     } else {
         // No --config flag, use command-specific section if available
         let command_section = command_name.and_then(|cmd| file.sections.get(cmd)).cloned();
-
-        let default_section = file.sections.get("default").cloned().unwrap_or_default();
-
         match command_section {
-            Some(cmd) => {
-                // Merge command-specific with default: command wins for set fields,
-                // default fills in missing fields
-                let mut merged = cmd.clone();
-                if merged.notes_folder.is_none() {
-                    merged.notes_folder = default_section.notes_folder.clone();
-                }
-                if merged.editor.is_none() {
-                    merged.editor = default_section.editor.clone();
-                }
-                if merged.template.is_none() {
-                    merged.template = default_section.template.clone();
-                }
-                if merged.batch.is_none() {
-                    merged.batch = default_section.batch;
-                }
-                merged
-            }
+            Some(cmd) => merge_over_default(cmd, &default_section),
             None => default_section,
         }
     };
@@ -170,6 +135,23 @@ pub fn load_config_with_fallback(
 fn default_config_path() -> PathBuf {
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
     home.join(CONFIG_PATH)
+}
+
+/// Fills unset fields in `base` from `default`, returning the merged result.
+fn merge_over_default(mut base: NamedConfig, default: &NamedConfig) -> NamedConfig {
+    if base.notes_folder.is_none() {
+        base.notes_folder = default.notes_folder.clone();
+    }
+    if base.editor.is_none() {
+        base.editor = default.editor.clone();
+    }
+    if base.template.is_none() {
+        base.template = default.template.clone();
+    }
+    if base.batch.is_none() {
+        base.batch = default.batch;
+    }
+    base
 }
 
 /// Expands a leading `~` to the user's home directory.
