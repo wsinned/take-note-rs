@@ -7,6 +7,7 @@ mod helpers;
 mod options;
 
 use commands::daily::DailyArgs;
+use commands::init::InitError;
 use commands::weekly::WeeklyArgs;
 // Configuration is loaded per-command inside the subcommand modules.
 
@@ -26,18 +27,37 @@ enum Commands {
     Weekly(WeeklyArgs),
     /// Open a file for the given day's note, creating it first if it doesn't exist
     Daily(DailyArgs),
+    /// Run the interactive setup wizard to create or update ~/.config/take-note/config.toml
+    Init,
 }
 
 fn main() {
     let cli = Cli::parse();
 
-    let result = match cli.command {
-        Commands::Weekly(args) => commands::weekly::run(args),
-        Commands::Daily(args) => commands::daily::run(args),
-    };
-
-    if let Err(e) = result {
-        eprintln!("Error: {e}");
-        process::exit(1);
+    match cli.command {
+        Commands::Weekly(args) => {
+            if let Err(e) = commands::weekly::run(args) {
+                eprintln!("Error: {e}");
+                process::exit(1);
+            }
+        }
+        Commands::Daily(args) => {
+            if let Err(e) = commands::daily::run(args) {
+                eprintln!("Error: {e}");
+                process::exit(1);
+            }
+        }
+        Commands::Init => match commands::init::run() {
+            Ok(()) => {}
+            Err(InitError::Interrupted) => process::exit(130),
+            Err(InitError::PreFlightFixed) => {
+                eprintln!("pre-flight fixes applied — rerun `take-note init` to continue");
+                process::exit(2);
+            }
+            Err(InitError::Other(msg)) => {
+                eprintln!("Error: {msg}");
+                process::exit(1);
+            }
+        },
     }
 }

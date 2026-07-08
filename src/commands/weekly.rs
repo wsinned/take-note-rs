@@ -2,7 +2,7 @@ use clap::Args;
 use std::path::PathBuf;
 
 use crate::handlers::open_with_editor;
-use crate::helpers::config::{Editor, Mergeable, NamedConfig, merge_with_flags};
+use crate::helpers::config::{BATCH_SIZE_RANGE, Editor, Mergeable, NamedConfig, merge_with_flags};
 use crate::helpers::date::{
     When, date_for_header, date_from_when, get_batch_dates, name_from_date,
 };
@@ -70,7 +70,7 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
     } else {
         merged.batch.unwrap_or(1)
     };
-    if !(1..=8).contains(&batch_size) {
+    if !BATCH_SIZE_RANGE.contains(&batch_size) {
         return Err("batch size must be between 1 and 8".into());
     }
 

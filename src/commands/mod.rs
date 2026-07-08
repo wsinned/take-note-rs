@@ -1,4 +1,5 @@
 pub mod daily;
+pub mod init;
 pub mod weekly;
 
 use std::io::Write;
