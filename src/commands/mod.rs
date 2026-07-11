@@ -54,8 +54,12 @@ pub(crate) fn insert_blob_at_heading_path_atomic(
 }
 
 fn write_atomic(path: &Path, content: &[u8]) -> std::io::Result<()> {
-    let parent = path.parent().unwrap_or_else(|| Path::new("."));
-    let file_name = path
+    // Resolve symlinks before replacing the file so an append updates the note
+    // target rather than replacing the link itself.
+    let target = path.canonicalize()?;
+    let permissions = std::fs::metadata(&target)?.permissions();
+    let parent = target.parent().unwrap_or_else(|| Path::new("."));
+    let file_name = target
         .file_name()
         .and_then(|name| name.to_str())
         .unwrap_or("take-note");
@@ -65,9 +69,13 @@ fn write_atomic(path: &Path, content: &[u8]) -> std::io::Result<()> {
         .tempfile_in(parent)?;
 
     temp_file.write_all(content)?;
+    temp_file.as_file().set_permissions(permissions)?;
     temp_file.as_file().sync_all()?;
 
-    temp_file.persist(path).map(|_| ()).map_err(|err| err.error)
+    temp_file
+        .persist(target)
+        .map(|_| ())
+        .map_err(|err| err.error)
 }
 
 #[cfg(test)]
@@ -145,5 +153,45 @@ mod tests {
         let result = insert_blob_at_heading_path_atomic(&path, "Daily Log/Tasks", "new");
 
         assert!(result.is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn append_blob_preserves_unix_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("note.md");
+        std::fs::write(&path, "existing").unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o640)).unwrap();
+
+        append_blob_atomic(&path, "blob").unwrap();
+
+        assert_eq!(
+            std::fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o640
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn append_blob_through_symlink_updates_target_and_preserves_link() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("note.md");
+        let link = dir.path().join("linked-note.md");
+        std::fs::write(&target, "existing").unwrap();
+        symlink(&target, &link).unwrap();
+
+        append_blob_atomic(&link, "blob").unwrap();
+
+        assert_eq!(std::fs::read_to_string(&target).unwrap(), "existing\nblob");
+        assert!(
+            std::fs::symlink_metadata(&link)
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
     }
 }
