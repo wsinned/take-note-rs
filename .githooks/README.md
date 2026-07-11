@@ -21,8 +21,8 @@ git config --global core.hooksPath .githooks
 ### pre-commit
 
 Runs before each commit:
-- `cargo fmt --check`
-- `cargo clippy -- -D warnings`
+- `cargo fmt --all -- --check`
+- `cargo clippy --all-targets --all-features -- -D warnings`
 - `cargo test --all-features`
 
 ### commit-msg
