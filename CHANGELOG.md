@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.3.0 - 2026-07-11
+#### Features
+- add insert mode - (6f630b1) - Dennis Woodruff
+- add markdown heading helper - (fde627d) - Dennis Woodruff
+#### Bug Fixes
+- (**markdown**) remove redundant dead_code suppressions - (0dd2b76) - Dennis Woodruff
+- missing insert mode in test initialisers - (a06caa3) - Dennis Woodruff
+#### Miscellaneous Chores
+- add conventional commit hook - (9664adc) - Dennis Woodruff
+
+- - -
+
 ## v2.2.0 - 2026-07-08
 #### Features
 - add take-note init setup wizard - (2255264) - Dennis Woodruff, *Claude Sonnet 4.6*
