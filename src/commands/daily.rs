@@ -199,6 +199,7 @@ mod tests {
         let err = run(DailyArgs {
             when: Some("today".to_string()),
             append: None,
+            insert: None,
             when_flag: None,
             config: Some("default".to_string()),
             notes_folder: None,

@@ -232,6 +232,7 @@ mod tests {
         let err = run(WeeklyArgs {
             when: Some("thisWeek".to_string()),
             append: None,
+            insert: None,
             when_flag: None,
             config: Some("default".to_string()),
             notes_folder: None,
