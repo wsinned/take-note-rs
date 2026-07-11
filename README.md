@@ -193,12 +193,8 @@ src/
   helpers/
     config.rs          # TOML config loading
     date.rs            # Date calculations
-<<<<<<< HEAD
-    output.rs          # Format output for --no-open
-=======
     output.rs          # Format output for --noOpen
     markdown.rs        # Markdown heading helpers
->>>>>>> f5c362b (feat: add insert mode)
     template.rs        # Template loading & variable replacement
   handlers/
     mod.rs             # Editor integrations (obsidian, vscode, generic)
@@ -216,10 +212,6 @@ src/
 - [x] Config file support
 - [x] Named configs
 - [x] Batch creation (`--batch N`)
-<<<<<<< HEAD
 - [x] `take-note init` setup wizard
-- [ ] Insert mode with heading locators
-=======
 - [x] Insert mode with heading locators
->>>>>>> f5c362b (feat: add insert mode)
 - [x] Append mode (`take-note daily today "text"`)
