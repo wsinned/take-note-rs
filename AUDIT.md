@@ -23,12 +23,18 @@ mark their checkboxes when the corresponding change and tests are complete.
   still cannot preserve hard-link identity or arbitrary ACLs and extended
   attributes portably.
 
-- [ ] 2. **High: note creation has a race that can truncate another writer's file**
+- [x] 2. **High: note creation has a race that can truncate another writer's file**
 
   `src/commands/daily.rs:85-90` and `src/commands/weekly.rs:104-109` check
   `exists()` and then call `std::fs::write`. Another process can create the file
   between those operations, after which it gets truncated. Use
   `OpenOptions::create_new(true)` and handle `AlreadyExists`.
+
+  Resolution: daily and weekly note creation now uses a shared exclusive-create
+  helper. `AlreadyExists` is treated as finding an existing note, so a
+  concurrent creator's contents are not overwritten. Regression tests cover
+  existing-file preservation and simultaneous creation with exactly one
+  winner.
 
 - [ ] 3. **High: two release workflows compete for the same release**
 

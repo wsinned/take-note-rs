@@ -82,16 +82,16 @@ pub fn run(args: DailyArgs) -> Result<(), Box<dyn std::error::Error>> {
 
     std::fs::create_dir_all(&full_path)?;
     let file_path = full_path.join(&file_name);
-    let file_exists = file_path.exists();
-
-    if !file_exists {
+    let created = if file_path.exists() {
+        false
+    } else {
         let content = get_template_content(&notes_folder, merged.template.as_deref())?;
         let content = update_template_variables(&content, &date_for_header(date));
-        std::fs::write(&file_path, content)?;
-    }
+        crate::commands::create_note(&file_path, &content)?
+    };
 
     let result = FileResult {
-        created: !file_exists,
+        created,
         path: file_path.to_string_lossy().into_owned(),
         date: format!(
             "{:04}-{:02}-{:02}",

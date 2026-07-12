@@ -2,8 +2,20 @@ pub mod daily;
 pub mod init;
 pub mod weekly;
 
-use std::io::Write;
+use std::fs::OpenOptions;
+use std::io::{ErrorKind, Write};
 use std::path::Path;
+
+pub(crate) fn create_note(path: &Path, content: &str) -> std::io::Result<bool> {
+    match OpenOptions::new().write(true).create_new(true).open(path) {
+        Ok(mut file) => {
+            file.write_all(content.as_bytes())?;
+            Ok(true)
+        }
+        Err(error) if error.kind() == ErrorKind::AlreadyExists => Ok(false),
+        Err(error) => Err(error),
+    }
+}
 
 pub(crate) fn append_blob_atomic(path: &Path, blob: &str) -> std::io::Result<()> {
     let mut content = std::fs::read(path)?;
@@ -81,6 +93,49 @@ fn write_atomic(path: &Path, content: &[u8]) -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn create_note_does_not_overwrite_existing_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("note.md");
+        std::fs::write(&path, "existing").unwrap();
+
+        let created = create_note(&path, "replacement").unwrap();
+
+        assert!(!created);
+        assert_eq!(std::fs::read_to_string(path).unwrap(), "existing");
+    }
+
+    #[test]
+    fn concurrent_note_creation_has_exactly_one_winner() {
+        use std::sync::{Arc, Barrier};
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = Arc::new(dir.path().join("note.md"));
+        let barrier = Arc::new(Barrier::new(2));
+        let mut threads = Vec::new();
+
+        for content in ["first", "second"] {
+            let path = Arc::clone(&path);
+            let barrier = Arc::clone(&barrier);
+            threads.push(std::thread::spawn(move || {
+                barrier.wait();
+                (content, create_note(&path, content).unwrap())
+            }));
+        }
+
+        let results: Vec<_> = threads
+            .into_iter()
+            .map(|thread| thread.join().unwrap())
+            .collect();
+        let winners: Vec<_> = results
+            .iter()
+            .filter_map(|(content, created)| created.then_some(*content))
+            .collect();
+
+        assert_eq!(winners.len(), 1);
+        assert_eq!(std::fs::read_to_string(&*path).unwrap(), winners[0]);
+    }
 
     #[test]
     fn append_blob_inserts_newline_when_existing_content_has_no_trailing_newline() {
