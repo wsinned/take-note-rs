@@ -8,6 +8,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  COCOGITTO_VERSION: 7.0.0
+  CARGO_EDIT_VERSION: 0.13.11
 
 jobs:
   test:
@@ -23,12 +25,6 @@ jobs:
 
       - name: Cache cargo dependencies
         uses: Swatinem/rust-cache@v2
-
-      - name: Install cocogitto
-        run: cargo install cocogitto
-
-      - name: Validate cocogitto config
-        run: cog get-version
 
       - name: Run tests
         run: cargo test --all-features
@@ -65,11 +61,20 @@ jobs:
       - name: Cache cargo dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Install cocogitto
-        run: cargo install cocogitto
+      - name: Cache release tools
+        id: release-tools-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/cog
+            ~/.cargo/bin/cargo-set-version
+          key: release-tools-${{ runner.os }}-cog-${{ env.COCOGITTO_VERSION }}-cargo-edit-${{ env.CARGO_EDIT_VERSION }}
 
-      - name: Install cargo-edit
-        run: cargo install cargo-edit
+      - name: Install release tools
+        if: steps.release-tools-cache.outputs.cache-hit != 'true'
+        run: |
+          cargo install cocogitto --version "$COCOGITTO_VERSION" --locked
+          cargo install cargo-edit --version "$CARGO_EDIT_VERSION" --locked
 
       - name: Configure Git author
         run: |
