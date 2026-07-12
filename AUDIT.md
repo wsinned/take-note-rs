@@ -49,7 +49,22 @@ mark their checkboxes when the corresponding change and tests are complete.
   post-bump pushes were also removed so CI owns one explicit atomic push of the
   version commit and tag before building and publishing the release.
 
-- [ ] 4. **High: malformed-config recovery never actually starts fresh**
+- [x] 4. **High: CI repeatedly compiles unpinned release tooling**
+
+  `.github/workflows/ci.yml` installs Cocogitto from source in both the test and
+  version-bump jobs, making tool compilation one of the slowest CI steps.
+  `cargo install cocogitto` and `cargo install cargo-edit` are also unpinned, so
+  new tool releases or MSRV changes can break CI without a repository change.
+  Remove Cocogitto from jobs that do not require it, pin required tool versions
+  with `--locked`, and cache only their installed executables using keys that
+  include the runner platform and exact tool version.
+
+  Resolution: the test job no longer installs Cocogitto. The version-bump job
+  pins Cocogitto and `cargo-edit`, installs them with locked dependency graphs,
+  and caches only the `cog` and `cargo-set-version` executables under a key that
+  includes the runner platform and both exact versions.
+
+- [ ] 5. **High: malformed-config recovery never actually starts fresh**
 
   `src/commands/init.rs:61-81` backs up malformed TOML but leaves the malformed
   original in place. Rerunning `init` encounters the same error indefinitely.
@@ -57,7 +72,7 @@ mark their checkboxes when the corresponding change and tests are complete.
   can disagree. Generate one backup path, back up once, and replace or remove
   the invalid source atomically.
 
-- [ ] 5. **High: user-controlled config structure can panic `init`**
+- [ ] 6. **High: user-controlled config structure can panic `init`**
 
   Preflight skips non-table top-level values at
   `src/commands/init.rs:126-129`, but section selection later exposes them and
@@ -65,7 +80,7 @@ mark their checkboxes when the corresponding change and tests are complete.
   `src/commands/init.rs:463-466`. Config such as `default = 1` can therefore
   panic rather than produce a normal diagnostic.
 
-- [ ] 6. **Medium: failed argument validation can still mutate the filesystem**
+- [ ] 7. **Medium: failed argument validation can still mutate the filesystem**
 
   Daily and weekly create directories and files before parsing all editor or
   format options or validating an insertion heading
@@ -73,13 +88,13 @@ mark their checkboxes when the corresponding change and tests are complete.
   unsuccessful invocation can leave new notes behind. Prefer Clap typed values
   and complete validation before mutation.
 
-- [ ] 7. **Medium: editor launch failures return success**
+- [ ] 8. **Medium: editor launch failures return success**
 
   `src/handlers/mod.rs:18-44` catches spawn errors, prints a warning, and
   returns `()`. Automation receives exit code 0 even though the requested
   editor never opened. Return and propagate an `io::Result`.
 
-- [ ] 8. **Medium: editor handling is unexpectedly limited**
+- [ ] 9. **Medium: editor handling is unexpectedly limited**
 
   At `src/handlers/mod.rs:26-28`, a value such as `EDITOR="code --wait"` is
   treated as one executable name, `VISUAL` is ignored, and generic terminal
@@ -87,14 +102,14 @@ mark their checkboxes when the corresponding change and tests are complete.
   `src/handlers/mod.rs:51-54`, but `start` is normally a `cmd.exe` built-in and
   will not execute this way.
 
-- [ ] 9. **Medium: explicit profile typos silently select the default profile**
+- [ ] 10. **Medium: explicit profile typos silently select the default profile**
 
   At `src/helpers/config.rs:103-106`, an unknown `--config wrok` becomes an
   empty config merged over `[default]`. That can create a note in the wrong
   vault without warning. Explicitly requested missing profiles should be
   errors.
 
-- [ ] 10. **Medium: config path behavior is not platform-native and has a dangerous fallback**
+- [ ] 11. **Medium: config path behavior is not platform-native and has a dangerous fallback**
 
   `src/helpers/config.rs:134-137` hardcodes `~/.config`, ignoring
   `XDG_CONFIG_HOME` and Windows or macOS conventions. If no home directory is
@@ -102,42 +117,42 @@ mark their checkboxes when the corresponding change and tests are complete.
   that behavior at `src/helpers/config.rs:157-164`, potentially redirecting
   note creation into the repository.
 
-- [ ] 11. **Medium: Markdown insertion is not sufficiently Markdown-aware**
+- [ ] 12. **Medium: Markdown insertion is not sufficiently Markdown-aware**
 
   `src/helpers/markdown.rs:71-120` interprets heading-looking lines inside
   fenced code blocks as real headings. It also omits CommonMark details such as
   leading indentation and closing `#` characters. Content can be inserted into
   the wrong section.
 
-- [ ] 12. **Medium: template paths can escape `notesFolder`**
+- [ ] 13. **Medium: template paths can escape `notesFolder`**
 
   `src/helpers/template.rs:19-31` joins the configured template directly.
   Absolute paths discard the base, while `../` traverses outside it,
   contradicting the README's "relative to `notesFolder`" claim. Either
   document external templates or enforce containment.
 
-- [ ] 13. **Medium: config accepts unknown fields silently**
+- [ ] 14. **Medium: config accepts unknown fields silently**
 
   The config structs at `src/helpers/config.rs:23-37` do not use
   `#[serde(deny_unknown_fields)]`. Misspellings such as `notes_folder`,
   `noOpen`, or `templat` are ignored, which is particularly surprising for a
   CLI configuration file.
 
-- [ ] 14. **Medium: no platform or MSRV contract**
+- [ ] 15. **Medium: no platform or MSRV contract**
 
   `Cargo.toml:4` uses edition 2024 but has no `rust-version`, and no
   `rust-toolchain.toml` exists. CI uses floating stable toolchains.
   Contributors cannot determine the supported compiler, and a new stable
   release can unexpectedly alter CI or release behavior.
 
-- [ ] 15. **Low: documentation examples imply a library that does not exist**
+- [ ] 16. **Low: documentation examples imply a library that does not exist**
 
   Rustdoc examples such as `src/handlers/mod.rs:10-17` import `take_note::...`,
   but this is a binary-only crate with private modules in `src/main.rs`. These
   are not meaningful public API examples, despite the README claiming doc
   tests are run.
 
-- [ ] 16. **Low: test dependencies are unused**
+- [ ] 17. **Low: test dependencies are unused**
 
   `assert_cmd` and `predicates` are declared in `Cargo.toml:23-25`, but there
   are no integration tests. Command exit statuses, filesystem side effects,
