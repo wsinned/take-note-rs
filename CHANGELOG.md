@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.3.1 - 2026-07-12
+#### Bug Fixes
+- preserve note permissions - (3abc2c9) - Dennis Woodruff
+#### Miscellaneous Chores
+- strengthen contributor checks - (4cdbc6c) - Dennis Woodruff
+
+- - -
+
 ## v2.3.0 - 2026-07-11
 #### Features
 - add insert mode - (6f630b1) - Dennis Woodruff
