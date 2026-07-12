@@ -8,11 +8,6 @@ pre_bump_hooks = [
     "cargo set-version {{version}}"
 ]
 
-post_bump_hooks = [
-    "git push origin main",
-    "git push origin --tags"
-]
-
 [commit_types]
 feat = { bump_minor = true }
 fix = { bump_patch = true }
