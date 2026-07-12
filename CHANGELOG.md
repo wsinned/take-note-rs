@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.3.3 - 2026-07-12
+#### Continuous Integration
+- cache pinned release tools - (cd4fa65) - Dennis Woodruff
+
+- - -
+
 ## v2.3.2 - 2026-07-12
 #### Bug Fixes
 - prevent concurrent note truncation - (a8bd7b4) - Dennis Woodruff
