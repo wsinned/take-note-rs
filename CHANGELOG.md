@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.3.2 - 2026-07-12
+#### Bug Fixes
+- prevent concurrent note truncation - (a8bd7b4) - Dennis Woodruff
+#### Continuous Integration
+- consolidate release pipeline - (3f1518c) - Dennis Woodruff
+
+- - -
+
 ## v2.3.1 - 2026-07-12
 #### Bug Fixes
 - preserve note permissions - (3abc2c9) - Dennis Woodruff
