@@ -53,7 +53,6 @@ jobs:
       contents: write
     outputs:
       new_version: ${{ steps.bump.outputs.new_version }}
-      old_version: ${{ steps.bump.outputs.old_version }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -86,9 +85,9 @@ jobs:
           echo "Bumped to $NEW_VERSION"
 
       - name: Push version bump and tag
-        run: |
-          git push origin main
-          git push origin --tags
+        env:
+          TAG: v${{ steps.bump.outputs.new_version }}
+        run: git push --atomic origin main "$TAG"
 
   build:
     name: Build

@@ -36,13 +36,18 @@ mark their checkboxes when the corresponding change and tests are complete.
   existing-file preservation and simultaneous creation with exactly one
   winner.
 
-- [ ] 3. **High: two release workflows compete for the same release**
+- [x] 3. **High: two release workflows compete for the same release**
 
   `.github/workflows/ci.yml:80-213` pushes a tag, builds artifacts, and creates
   a release. That tag also triggers `.github/workflows/release.yml:3-92`, which
   independently builds and creates the same release. This can cause duplicate
   uploads, partial releases, or nondeterministic failures. Keep one
   authoritative release pipeline.
+
+  Resolution: `.github/workflows/ci.yml` is now the sole release pipeline and
+  the redundant tag-triggered workflow has been removed. Cocogitto's implicit
+  post-bump pushes were also removed so CI owns one explicit atomic push of the
+  version commit and tag before building and publishing the release.
 
 - [ ] 4. **High: malformed-config recovery never actually starts fresh**
 
