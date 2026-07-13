@@ -64,13 +64,19 @@ mark their checkboxes when the corresponding change and tests are complete.
   and caches only the `cog` and `cargo-set-version` executables under a key that
   includes the runner platform and both exact versions.
 
-- [ ] 5. **High: malformed-config recovery never actually starts fresh**
+- [x] 5. **High: malformed-config recovery never actually starts fresh**
 
   `src/commands/init.rs:61-81` backs up malformed TOML but leaves the malformed
   original in place. Rerunning `init` encounters the same error indefinitely.
   The displayed and actual backup timestamps are also generated separately and
   can disagree. Generate one backup path, back up once, and replace or remove
   the invalid source atomically.
+
+  Resolution: confirmed recovery now creates a collision-safe backup containing
+  the exact original bytes and permissions, syncs it, removes the malformed
+  config, and continues the same wizard run with a fresh document. Partial
+  backups are cleaned up on failure, successful backups are retained if source
+  removal fails, and the behavior is covered by tests and README documentation.
 
 - [ ] 6. **High: user-controlled config structure can panic `init`**
 

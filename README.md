@@ -108,6 +108,25 @@ take-note --help
 take-note --version
 ```
 
+### Interactive setup
+
+Run `take-note init` to create or update the configuration interactively. If
+the existing config contains malformed TOML, the wizard displays the parse
+error and asks whether to back it up and start fresh. A confirmed recovery:
+
+- writes the exact original contents to
+  `config.toml.YYYYMMDD-HHMMSS`, adding `.1`, `.2`, and so on rather than
+  overwriting an existing backup;
+- preserves the original file permissions and syncs the completed backup
+  before removing the malformed config; and
+- continues setup immediately with an empty configuration.
+
+If backup creation, writing, permission preservation, or syncing fails, the
+partial backup is removed and the original config is left untouched. If the
+backup succeeds but removing the original fails, both files are retained and
+the command reports their paths instead of continuing. Cancelling later setup
+prompts leaves the completed backup in place and no active config file.
+
 ### Weekly notes
 
 ```bash
