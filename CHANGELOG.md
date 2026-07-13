@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.3.4 - 2026-07-13
+#### Bug Fixes
+- recover from malformed config - (72abf4b) - Dennis Woodruff
+#### Documentation
+- track cache action upgrade - (351927f) - Dennis Woodruff
+
+- - -
+
 ## v2.3.3 - 2026-07-12
 #### Continuous Integration
 - cache pinned release tools - (cd4fa65) - Dennis Woodruff
