@@ -86,7 +86,15 @@ mark their checkboxes when the corresponding change and tests are complete.
   `src/commands/init.rs:463-466`. Config such as `default = 1` can therefore
   panic rather than produce a normal diagnostic.
 
-- [ ] 7. **Medium: failed argument validation can still mutate the filesystem**
+- [ ] 7. **Medium: release-tool cache action uses deprecated Node.js 20**
+
+  CI run `29201795355` warns that `actions/cache@v4` targets deprecated
+  Node.js 20 and is being forced to run on Node.js 24. Upgrade the release-tool
+  cache step in `.github/workflows/ci.yml` to the latest supported major
+  (`actions/cache@v6`, currently released as v6.1.0) and confirm the cache is
+  restored without runner deprecation warnings.
+
+- [ ] 8. **Medium: failed argument validation can still mutate the filesystem**
 
   Daily and weekly create directories and files before parsing all editor or
   format options or validating an insertion heading
@@ -94,13 +102,13 @@ mark their checkboxes when the corresponding change and tests are complete.
   unsuccessful invocation can leave new notes behind. Prefer Clap typed values
   and complete validation before mutation.
 
-- [ ] 8. **Medium: editor launch failures return success**
+- [ ] 9. **Medium: editor launch failures return success**
 
   `src/handlers/mod.rs:18-44` catches spawn errors, prints a warning, and
   returns `()`. Automation receives exit code 0 even though the requested
   editor never opened. Return and propagate an `io::Result`.
 
-- [ ] 9. **Medium: editor handling is unexpectedly limited**
+- [ ] 10. **Medium: editor handling is unexpectedly limited**
 
   At `src/handlers/mod.rs:26-28`, a value such as `EDITOR="code --wait"` is
   treated as one executable name, `VISUAL` is ignored, and generic terminal
@@ -108,14 +116,14 @@ mark their checkboxes when the corresponding change and tests are complete.
   `src/handlers/mod.rs:51-54`, but `start` is normally a `cmd.exe` built-in and
   will not execute this way.
 
-- [ ] 10. **Medium: explicit profile typos silently select the default profile**
+- [ ] 11. **Medium: explicit profile typos silently select the default profile**
 
   At `src/helpers/config.rs:103-106`, an unknown `--config wrok` becomes an
   empty config merged over `[default]`. That can create a note in the wrong
   vault without warning. Explicitly requested missing profiles should be
   errors.
 
-- [ ] 11. **Medium: config path behavior is not platform-native and has a dangerous fallback**
+- [ ] 12. **Medium: config path behavior is not platform-native and has a dangerous fallback**
 
   `src/helpers/config.rs:134-137` hardcodes `~/.config`, ignoring
   `XDG_CONFIG_HOME` and Windows or macOS conventions. If no home directory is
@@ -123,42 +131,42 @@ mark their checkboxes when the corresponding change and tests are complete.
   that behavior at `src/helpers/config.rs:157-164`, potentially redirecting
   note creation into the repository.
 
-- [ ] 12. **Medium: Markdown insertion is not sufficiently Markdown-aware**
+- [ ] 13. **Medium: Markdown insertion is not sufficiently Markdown-aware**
 
   `src/helpers/markdown.rs:71-120` interprets heading-looking lines inside
   fenced code blocks as real headings. It also omits CommonMark details such as
   leading indentation and closing `#` characters. Content can be inserted into
   the wrong section.
 
-- [ ] 13. **Medium: template paths can escape `notesFolder`**
+- [ ] 14. **Medium: template paths can escape `notesFolder`**
 
   `src/helpers/template.rs:19-31` joins the configured template directly.
   Absolute paths discard the base, while `../` traverses outside it,
   contradicting the README's "relative to `notesFolder`" claim. Either
   document external templates or enforce containment.
 
-- [ ] 14. **Medium: config accepts unknown fields silently**
+- [ ] 15. **Medium: config accepts unknown fields silently**
 
   The config structs at `src/helpers/config.rs:23-37` do not use
   `#[serde(deny_unknown_fields)]`. Misspellings such as `notes_folder`,
   `noOpen`, or `templat` are ignored, which is particularly surprising for a
   CLI configuration file.
 
-- [ ] 15. **Medium: no platform or MSRV contract**
+- [ ] 16. **Medium: no platform or MSRV contract**
 
   `Cargo.toml:4` uses edition 2024 but has no `rust-version`, and no
   `rust-toolchain.toml` exists. CI uses floating stable toolchains.
   Contributors cannot determine the supported compiler, and a new stable
   release can unexpectedly alter CI or release behavior.
 
-- [ ] 16. **Low: documentation examples imply a library that does not exist**
+- [ ] 17. **Low: documentation examples imply a library that does not exist**
 
   Rustdoc examples such as `src/handlers/mod.rs:10-17` import `take_note::...`,
   but this is a binary-only crate with private modules in `src/main.rs`. These
   are not meaningful public API examples, despite the README claiming doc
   tests are run.
 
-- [ ] 17. **Low: test dependencies are unused**
+- [ ] 18. **Low: test dependencies are unused**
 
   `assert_cmd` and `predicates` are declared in `Cargo.toml:23-25`, but there
   are no integration tests. Command exit statuses, filesystem side effects,
