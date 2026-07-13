@@ -1,6 +1,7 @@
 use chrono::Local;
 use dialoguer::{Confirm, Input, Select};
-use std::io;
+use std::fs::OpenOptions;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 use toml_edit::{DocumentMut, Item, Table};
@@ -63,22 +64,15 @@ pub fn run() -> Result<(), InitError> {
                 eprintln!("warning: config file cannot be parsed: {parse_err}");
                 let confirmed = map_prompt(
                     Confirm::new()
-                        .with_prompt(format!(
-                            "Back up as config.toml.{} and start fresh?",
-                            timestamp()
-                        ))
+                        .with_prompt("Back up the malformed config and start fresh?")
                         .default(false)
                         .interact(),
                 )?;
                 if confirmed {
-                    let backup = config_path.with_extension(format!("toml.{}", timestamp()));
-                    std::fs::copy(&config_path, &backup)
-                        .map_err(|e| InitError::Other(e.to_string()))?;
-                    eprintln!(
-                        "Backed up to {}. Rerun `take-note init` to continue setup.",
-                        backup.display()
-                    );
-                    return Err(InitError::PreFlightFixed);
+                    let backup =
+                        backup_malformed_config(&config_path, raw.as_bytes(), &timestamp())?;
+                    eprintln!("Backed up malformed config to {}.", backup.display());
+                    DocumentMut::new()
                 } else {
                     return Err(InitError::Interrupted);
                 }
@@ -460,6 +454,72 @@ fn prompt_batch(existing: &Table) -> Result<usize, InitError> {
 // TOML write helpers
 // ---------------------------------------------------------------------------
 
+fn backup_malformed_config(
+    config_path: &Path,
+    content: &[u8],
+    timestamp: &str,
+) -> Result<PathBuf, InitError> {
+    let permissions = std::fs::metadata(config_path)
+        .map_err(|error| InitError::Other(format!("cannot read config permissions: {error}")))?
+        .permissions();
+    let base = config_path.with_extension(format!("toml.{timestamp}"));
+
+    for suffix in 0usize.. {
+        let backup_path = if suffix == 0 {
+            base.clone()
+        } else {
+            let mut name = base.as_os_str().to_os_string();
+            name.push(format!(".{suffix}"));
+            PathBuf::from(name)
+        };
+
+        let mut backup = match OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&backup_path)
+        {
+            Ok(file) => file,
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(error) => {
+                return Err(InitError::Other(format!(
+                    "cannot create config backup {}: {error}",
+                    backup_path.display()
+                )));
+            }
+        };
+
+        let backup_result = (|| -> io::Result<()> {
+            backup.write_all(content)?;
+            backup.set_permissions(permissions.clone())?;
+            backup.sync_all()
+        })();
+        drop(backup);
+
+        if let Err(error) = backup_result {
+            let cleanup_error = std::fs::remove_file(&backup_path).err();
+            let cleanup = cleanup_error
+                .map(|error| format!("; also could not remove partial backup: {error}"))
+                .unwrap_or_default();
+            return Err(InitError::Other(format!(
+                "cannot complete config backup {}: {error}{cleanup}",
+                backup_path.display()
+            )));
+        }
+
+        if let Err(error) = std::fs::remove_file(config_path) {
+            return Err(InitError::Other(format!(
+                "backed up malformed config to {}, but could not remove {}: {error}",
+                backup_path.display(),
+                config_path.display()
+            )));
+        }
+
+        return Ok(backup_path);
+    }
+
+    unreachable!("unbounded backup suffix search must return");
+}
+
 fn write_section(doc: &mut DocumentMut, name: &str, values: &SectionValues) {
     let table = doc[name].or_insert(Item::Table(Table::new()));
     let t = table.as_table_mut().expect("section must be a table");
@@ -480,7 +540,6 @@ fn write_section(doc: &mut DocumentMut, name: &str, values: &SectionValues) {
 }
 
 fn write_atomic(path: &Path, content: &[u8]) -> io::Result<()> {
-    use std::io::Write;
     let parent = path.parent().unwrap_or_else(|| Path::new("."));
     let file_name = path
         .file_name()
@@ -513,6 +572,58 @@ fn timestamp() -> String {
 mod tests {
     use super::*;
     use crate::helpers::config::load_config;
+
+    #[test]
+    fn malformed_config_backup_removes_original_and_preserves_contents() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join("config.toml");
+        let malformed = b"[default\ninvalid";
+        std::fs::write(&config_path, malformed).unwrap();
+
+        let backup = backup_malformed_config(&config_path, malformed, "20260713-120000").unwrap();
+
+        assert_eq!(backup, dir.path().join("config.toml.20260713-120000"));
+        assert_eq!(std::fs::read(&backup).unwrap(), malformed);
+        assert!(!config_path.exists());
+    }
+
+    #[test]
+    fn malformed_config_backup_uses_suffix_without_overwriting() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join("config.toml");
+        let existing_backup = dir.path().join("config.toml.20260713-120000");
+        std::fs::write(&config_path, "malformed").unwrap();
+        std::fs::write(&existing_backup, "older backup").unwrap();
+
+        let backup =
+            backup_malformed_config(&config_path, b"malformed", "20260713-120000").unwrap();
+
+        assert_eq!(backup, dir.path().join("config.toml.20260713-120000.1"));
+        assert_eq!(
+            std::fs::read_to_string(existing_backup).unwrap(),
+            "older backup"
+        );
+        assert_eq!(std::fs::read_to_string(backup).unwrap(), "malformed");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn malformed_config_backup_preserves_unix_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join("config.toml");
+        std::fs::write(&config_path, "malformed").unwrap();
+        std::fs::set_permissions(&config_path, std::fs::Permissions::from_mode(0o640)).unwrap();
+
+        let backup =
+            backup_malformed_config(&config_path, b"malformed", "20260713-120000").unwrap();
+
+        assert_eq!(
+            std::fs::metadata(backup).unwrap().permissions().mode() & 0o777,
+            0o640
+        );
+    }
 
     #[test]
     fn write_section_creates_correct_toml_keys() {
