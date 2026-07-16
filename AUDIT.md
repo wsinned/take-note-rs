@@ -187,18 +187,24 @@ mark their checkboxes when the corresponding change and tests are complete.
   accurately describes `cargo test` as running unit tests, and documentation
   generation completes without implying a public library API.
 
-- [ ] 18. **Low: test dependencies are unused**
+- [x] 18. **Low: test dependencies are unused**
 
   `assert_cmd` and `predicates` are declared in `Cargo.toml:23-25`, but there
   are no integration tests. Command exit statuses, filesystem side effects,
   and headless output are precisely where these dependencies would be
   valuable.
 
+  Resolution: CLI integration tests now use `assert_cmd` and `predicates` to
+  cover help output, validation failure status and stderr without filesystem
+  mutation, and successful headless JSON note creation with the reported path
+  verified on disk.
+
 ## Testing Gaps
 
-The 49 existing tests are almost entirely unit tests. Notable omissions are:
+The project now has 60 unit tests and 3 CLI integration tests. Notable
+omissions are:
 
-- CLI exit status and stderr behavior
+- Broader CLI exit status and stderr behavior
 - Concurrent note creation
 - Permission and symlink preservation
 - Malformed `init` recovery
