@@ -47,12 +47,19 @@ mv take-note_linux_x86_64 ~/.local/bin/take-note
 
 ### From source (requires Rust)
 
+Source builds require Rust 1.85.0 or newer. The repository pins Rust 1.85.0
+for development and application builds to enforce this minimum supported Rust
+version (MSRV).
+
 ```bash
 git clone https://github.com/wsinned/take-note-rs.git
 cd take-note-rs
 cargo build --release
 # Binary at target/release/take-note
 ```
+
+Pre-built releases support Linux x86_64 and arm64, macOS Intel and Apple
+Silicon, and Windows x86_64, matching the assets listed above.
 
 ---
 
