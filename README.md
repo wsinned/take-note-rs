@@ -202,7 +202,7 @@ git config core.hooksPath .githooks
 ```
 
 ```bash
-cargo test        # Run all tests (including doc tests)
+cargo test        # Run all unit tests
 cargo build       # Debug build
 cargo build --release  # Optimized binary
 ```

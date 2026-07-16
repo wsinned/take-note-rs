@@ -8,14 +8,6 @@ use std::path::PathBuf;
 /// # Errors
 ///
 /// Returns an error if the template file is specified but does not exist.
-///
-/// # Examples
-///
-/// ```no_run
-/// use take_note::helpers::template::get_template_content;
-///
-/// let content = get_template_content("/tmp/notes", Some("Templates/weekly.md")).unwrap();
-/// ```
 pub fn get_template_content(
     notes_folder: &str,
     template: Option<&str>,
@@ -37,16 +29,6 @@ pub fn get_template_content(
 }
 
 /// Replaces `{{date}}` in template content with the given date string.
-///
-/// # Examples
-///
-/// ```
-/// use take_note::helpers::template::update_template_variables;
-///
-/// let content = "# W/C {{date}}\n\n";
-/// let updated = update_template_variables(content, "Monday 28 July 2025");
-/// assert_eq!(updated, "# W/C Monday 28 July 2025\n\n");
-/// ```
 pub fn update_template_variables(content: &str, date: &str) -> String {
     content.replace("{{date}}", date)
 }

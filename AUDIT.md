@@ -175,12 +175,17 @@ mark their checkboxes when the corresponding change and tests are complete.
   required by its existing `cargo-edit` release tool. The README documents the
   MSRV and the five supported release targets.
 
-- [ ] 17. **Low: documentation examples imply a library that does not exist**
+- [x] 17. **Low: documentation examples imply a library that does not exist**
 
   Rustdoc examples such as `src/handlers/mod.rs:10-17` import `take_note::...`,
   but this is a binary-only crate with private modules in `src/main.rs`. These
   are not meaningful public API examples, despite the README claiming doc
   tests are run.
+
+  Resolution: library-style examples were removed from the binary crate's
+  private modules, whose behavior remains covered by unit tests. The README now
+  accurately describes `cargo test` as running unit tests, and documentation
+  generation completes without implying a public library API.
 
 - [ ] 18. **Low: test dependencies are unused**
 

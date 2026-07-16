@@ -7,16 +7,6 @@ use thiserror::Error;
 pub struct InvalidEditorError;
 
 /// Parse an editor option from a string.
-///
-/// # Examples
-///
-/// ```
-/// use take_note::helpers::config::Editor;
-/// use take_note::options::editor::editor_from_str;
-///
-/// assert_eq!(editor_from_str("obsidian").unwrap(), Editor::Obsidian);
-/// assert!(editor_from_str("invalid").is_err());
-/// ```
 pub fn editor_from_str(s: &str) -> Result<Editor, InvalidEditorError> {
     match s {
         "generic" => Ok(Editor::Generic),

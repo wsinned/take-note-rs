@@ -18,22 +18,6 @@ pub struct FileResult {
 }
 
 /// Formats file results for output.
-///
-/// # Examples
-///
-/// ```
-/// use take_note::helpers::output::{format_output, FileResult, OutputFormat};
-///
-/// let result = FileResult {
-///     created: true,
-///     path: "/tmp/notes/2025/07/2025-07-28-Weekly-log.md".to_string(),
-///     date: "2025-07-28".to_string(),
-/// };
-///
-/// let text = format_output(&[result], OutputFormat::Text);
-/// assert!(text.contains("Created"));
-/// assert!(text.contains("/tmp/notes/2025/07/2025-07-28-Weekly-log.md"));
-/// ```
 pub fn format_output(results: &[FileResult], format: OutputFormat) -> Option<String> {
     match format {
         OutputFormat::Json => Some(serde_json::to_string_pretty(results).unwrap_or_default()),

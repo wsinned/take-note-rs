@@ -6,15 +6,6 @@ use std::process::Command;
 ///
 /// Spawns the editor process and returns immediately (does not wait).
 /// Prints a warning to stderr if the editor binary cannot be launched.
-///
-/// # Examples
-///
-/// ```no_run
-/// use take_note::handlers::open_with_editor;
-/// use take_note::helpers::config::Editor;
-///
-/// open_with_editor(Editor::Generic, "/tmp/notes/2025-07-28-Weekly-log.md");
-/// ```
 pub fn open_with_editor(editor: &Editor, file_path: &str) {
     match editor {
         Editor::Generic => open_generic(file_path),
