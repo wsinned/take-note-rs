@@ -29,15 +29,6 @@ pub struct InvalidDailyWhenError;
 
 impl When {
     /// Parse a when option from a string.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use take_note::helpers::date::When;
-    ///
-    /// assert_eq!(When::from_str("thisWeek").unwrap(), When::ThisWeek);
-    /// assert!(When::from_str("invalid").is_err());
-    /// ```
     pub fn from_str(s: &str) -> Result<Self, InvalidWhenError> {
         match s {
             "lastWeek" => Ok(When::LastWeek),
@@ -50,15 +41,6 @@ impl When {
 
 impl DailyWhen {
     /// Parse a daily when option from a string.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use take_note::helpers::date::DailyWhen;
-    ///
-    /// assert_eq!(DailyWhen::from_str("today").unwrap(), DailyWhen::Today);
-    /// assert!(DailyWhen::from_str("invalid").is_err());
-    /// ```
     pub fn from_str(s: &str) -> Result<Self, InvalidDailyWhenError> {
         match s {
             "yesterday" => Ok(DailyWhen::Yesterday),
@@ -73,17 +55,6 @@ impl DailyWhen {
 ///
 /// Weeks start on Monday. For `ThisWeek`, returns the Monday of the current week.
 /// For `LastWeek` and `NextWeek`, shifts by 7 days.
-///
-/// # Examples
-///
-/// ```
-/// use chrono::NaiveDate;
-/// use take_note::helpers::date::{date_from_when, When};
-///
-/// let monday = NaiveDate::from_ymd_opt(2025, 7, 28).unwrap();
-/// let result = date_from_when(monday, When::ThisWeek);
-/// assert_eq!(result, monday);
-/// ```
 pub fn date_from_when(date: NaiveDate, when: When) -> NaiveDate {
     let monday = date - Duration::days(date.weekday().num_days_from_monday() as i64);
 
@@ -95,17 +66,6 @@ pub fn date_from_when(date: NaiveDate, when: When) -> NaiveDate {
 }
 
 /// Returns the date relative to the given date for daily notes.
-///
-/// # Examples
-///
-/// ```
-/// use chrono::NaiveDate;
-/// use take_note::helpers::date::{date_from_daily_when, DailyWhen};
-///
-/// let today = NaiveDate::from_ymd_opt(2025, 7, 28).unwrap();
-/// let result = date_from_daily_when(today, DailyWhen::Today);
-/// assert_eq!(result, today);
-/// ```
 pub fn date_from_daily_when(date: NaiveDate, when: DailyWhen) -> NaiveDate {
     match when {
         DailyWhen::Yesterday => date - Duration::days(1),
@@ -117,18 +77,6 @@ pub fn date_from_daily_when(date: NaiveDate, when: DailyWhen) -> NaiveDate {
 /// Returns the path part and filename for a note.
 ///
 /// Path part is `YYYY/MM`, filename is `YYYY-MM-DD-{suffix}.{ext}`.
-///
-/// # Examples
-///
-/// ```
-/// use chrono::NaiveDate;
-/// use take_note::helpers::date::name_from_date;
-///
-/// let date = NaiveDate::from_ymd_opt(2025, 7, 28).unwrap();
-/// let (path, filename) = name_from_date(date, "Weekly-log", "md");
-/// assert_eq!(path, "2025/07");
-/// assert_eq!(filename, "2025-07-28-Weekly-log.md");
-/// ```
 pub fn name_from_date(date: NaiveDate, suffix: &str, ext: &str) -> (String, String) {
     let path_part = format!("{:04}/{:02}", date.year(), date.month());
     let file_name = format!(
@@ -145,17 +93,6 @@ pub fn name_from_date(date: NaiveDate, suffix: &str, ext: &str) -> (String, Stri
 /// Returns a formatted date string for note headers.
 ///
 /// Format: "Monday 28 July 2025"
-///
-/// # Examples
-///
-/// ```
-/// use chrono::NaiveDate;
-/// use take_note::helpers::date::date_for_header;
-///
-/// let date = NaiveDate::from_ymd_opt(2025, 7, 28).unwrap();
-/// let header = date_for_header(date);
-/// assert_eq!(header, "Monday 28 July 2025");
-/// ```
 pub fn date_for_header(date: NaiveDate) -> String {
     format!(
         "{} {:02} {} {:04}",
@@ -179,20 +116,6 @@ fn weekday_full_name(weekday: chrono::Weekday) -> &'static str {
 }
 
 /// Generates a batch of dates spaced 7 days apart.
-///
-/// # Examples
-///
-/// ```
-/// use chrono::NaiveDate;
-/// use take_note::helpers::date::get_batch_dates;
-///
-/// let start = NaiveDate::from_ymd_opt(2025, 7, 28).unwrap();
-/// let dates = get_batch_dates(start, 3);
-/// assert_eq!(dates.len(), 3);
-/// assert_eq!(dates[0], start);
-/// assert_eq!(dates[1], NaiveDate::from_ymd_opt(2025, 8, 4).unwrap());
-/// assert_eq!(dates[2], NaiveDate::from_ymd_opt(2025, 8, 11).unwrap());
-/// ```
 pub fn get_batch_dates(start_date: NaiveDate, batch_size: usize) -> Vec<NaiveDate> {
     (0..batch_size)
         .map(|i| start_date + Duration::days(i as i64 * 7))

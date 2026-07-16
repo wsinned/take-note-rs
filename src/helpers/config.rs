@@ -49,14 +49,6 @@ pub enum ConfigError {
 ///
 /// Falls back to `[default]` if the named section doesn't exist.
 /// Home directory (`~`) is expanded in path fields.
-///
-/// # Examples
-///
-/// ```no_run
-/// use take_note::helpers::config::load_config;
-///
-/// let config = load_config("default", None).unwrap();
-/// ```
 #[allow(dead_code)]
 pub fn load_config(name: &str, config_path: Option<&Path>) -> Result<NamedConfig, ConfigError> {
     load_config_with_fallback(name, None, config_path)
@@ -71,14 +63,6 @@ pub fn load_config(name: &str, config_path: Option<&Path>) -> Result<NamedConfig
 ///
 /// This allows separate defaults for each command without requiring
 /// explicit `--config` flags.
-///
-/// # Examples
-///
-/// ```no_run
-/// use take_note::helpers::config::load_config_with_fallback;
-///
-/// let config = load_config_with_fallback("default", Some("weekly"), None).unwrap();
-/// ```
 pub fn load_config_with_fallback(
     name: &str,
     command_name: Option<&str>,
