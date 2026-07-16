@@ -114,7 +114,7 @@ pub fn run(args: DailyArgs) -> Result<(), Box<dyn std::error::Error>> {
     if merged.no_open {
         let format = parse_format(merged.format.as_deref())?;
         if let Some(output) = format_output(&[result], format) {
-            println!("{}", output);
+            println!("{output}");
         }
         return Ok(());
     }

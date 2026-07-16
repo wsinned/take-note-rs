@@ -532,8 +532,7 @@ fn write_section(
     let item_type = table.type_name();
     let t = table.as_table_like_mut().ok_or_else(|| {
         InitError::Other(format!(
-            "config entry `{name}` must be a table, not {}",
-            item_type
+            "config entry `{name}` must be a table, not {item_type}"
         ))
     })?;
 

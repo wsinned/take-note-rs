@@ -135,14 +135,14 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
         } else {
             crate::commands::append_blob_atomic(std::path::Path::new(path), blob)?;
         }
-        println!("{}", path);
+        println!("{path}");
         return Ok(());
     }
 
     if merged.no_open {
         let format = parse_format(merged.format.as_deref())?;
         if let Some(output) = format_output(&results, format) {
-            println!("{}", output);
+            println!("{output}");
         }
         return Ok(());
     }
@@ -152,7 +152,7 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
         .first()
         .ok_or("internal error: no dates resolved")?
         .path;
-    println!("Opening {} with {:?}", first_file, editor);
+    println!("Opening {first_file} with {editor:?}");
     open_with_editor(&editor, first_file);
 
     Ok(())
