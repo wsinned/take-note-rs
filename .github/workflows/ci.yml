@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.85.0
+        uses: dtolnay/rust-toolchain@1.88.0
 
       - name: Cache cargo dependencies
         uses: Swatinem/rust-cache@v2
@@ -128,7 +128,7 @@ jobs:
           ref: v${{ needs.bump-version.outputs.new_version }}
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.85.0
+        uses: dtolnay/rust-toolchain@1.88.0
         with:
           targets: ${{ matrix.target }}
 

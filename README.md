@@ -47,7 +47,7 @@ mv take-note_linux_x86_64 ~/.local/bin/take-note
 
 ### From source (requires Rust)
 
-Source builds require Rust 1.85.0 or newer. The repository pins Rust 1.85.0
+Source builds require Rust 1.88.0 or newer. The repository pins Rust 1.88.0
 for development and application builds to enforce this minimum supported Rust
 version (MSRV).
 

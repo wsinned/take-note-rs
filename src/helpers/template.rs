@@ -44,7 +44,7 @@ impl std::fmt::Display for TemplateError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TemplateError::NotFound(path) => write!(f, "Template not found: {}", path.display()),
-            TemplateError::Io(msg) => write!(f, "IO error reading template: {}", msg),
+            TemplateError::Io(msg) => write!(f, "IO error reading template: {msg}"),
         }
     }
 }

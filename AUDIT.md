@@ -169,8 +169,8 @@ mark their checkboxes when the corresponding change and tests are complete.
   Contributors cannot determine the supported compiler, and a new stable
   release can unexpectedly alter CI or release behavior.
 
-  Resolution: the package now declares Rust 1.85 as its MSRV, development and
-  application builds are pinned to Rust 1.85.0, and CI verifies the project on
+  Resolution: the package now declares Rust 1.88 as its MSRV, development and
+  application builds are pinned to Rust 1.88.0, and CI verifies the project on
   that compiler. The version-bump job is separately pinned to Rust 1.92.0 as
   required by its existing `cargo-edit` release tool. The README documents the
   MSRV and the five supported release targets.
