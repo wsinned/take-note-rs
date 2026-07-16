@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.3.5 - 2026-07-16
+#### Bug Fixes
+- reject invalid config section structures - (aabfe69) - Dennis Woodruff
+
+- - -
+
 ## v2.3.4 - 2026-07-13
 #### Bug Fixes
 - recover from malformed config - (72abf4b) - Dennis Woodruff
