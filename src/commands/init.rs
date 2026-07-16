@@ -4,7 +4,7 @@ use std::fs::OpenOptions;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
-use toml_edit::{DocumentMut, Item, Table};
+use toml_edit::{DocumentMut, Item, Table, TableLike};
 
 use crate::helpers::config::{BATCH_SIZE_RANGE, CONFIG_PATH, expand_home};
 
@@ -97,7 +97,7 @@ pub fn run() -> Result<(), InitError> {
     let values = prompt_fields(&doc, &section_name)?;
 
     // --- write ---
-    write_section(&mut doc, &section_name, &values);
+    write_section(&mut doc, &section_name, &values)?;
     std::fs::create_dir_all(&config_dir).map_err(|e| InitError::Other(e.to_string()))?;
     write_atomic(&config_path, doc.to_string().as_bytes())
         .map_err(|e| InitError::Other(e.to_string()))?;
@@ -118,9 +118,12 @@ fn run_preflight_fixes(
     let mut issues: Vec<String> = Vec::new();
 
     for (section_name, item) in doc.iter() {
-        let Some(table) = item.as_table() else {
-            continue;
-        };
+        let table = item.as_table_like().ok_or_else(|| {
+            InitError::Other(format!(
+                "config entry `{section_name}` must be a table, not {}",
+                item.type_name()
+            ))
+        })?;
         if let Some(editor_item) = table.get(EDITOR_KEY)
             && let Some(s) = editor_item.as_str()
             && !EDITOR_OPTIONS.contains(&s)
@@ -164,9 +167,9 @@ fn run_preflight_fixes(
     let mut doc = doc.clone();
 
     for (section_name, item) in doc.iter_mut() {
-        let Some(table) = item.as_table_mut() else {
-            continue;
-        };
+        let table = item.as_table_like_mut().ok_or_else(|| {
+            InitError::Other(format!("config entry `{section_name}` must be a table"))
+        })?;
 
         // Fix invalid editor
         if let Some(editor_item) = table.get(EDITOR_KEY)
@@ -180,7 +183,7 @@ fn run_preflight_fixes(
                     .default(0)
                     .interact(),
             )?;
-            table[EDITOR_KEY] = toml_edit::value(EDITOR_OPTIONS[idx]);
+            table.insert(EDITOR_KEY, toml_edit::value(EDITOR_OPTIONS[idx]));
         }
 
         // Fix invalid notesFolder
@@ -223,7 +226,7 @@ fn run_preflight_fixes(
                             .interact_text(),
                     )?;
                     if Path::new(&expand_home(&new_path)).exists() {
-                        table[NOTES_FOLDER_KEY] = toml_edit::value(new_path);
+                        table.insert(NOTES_FOLDER_KEY, toml_edit::value(new_path));
                         break;
                     } else {
                         eprintln!("Path does not exist, try again.");
@@ -308,23 +311,23 @@ struct SectionValues {
 }
 
 fn prompt_fields(doc: &DocumentMut, section_name: &str) -> Result<SectionValues, InitError> {
+    let empty = Table::new();
     let existing = doc
         .get(section_name)
-        .and_then(|i| i.as_table())
-        .cloned()
-        .unwrap_or_default();
+        .and_then(Item::as_table_like)
+        .unwrap_or(&empty);
 
     // notesFolder
-    let notes_folder = prompt_notes_folder(&existing)?;
+    let notes_folder = prompt_notes_folder(existing)?;
 
     // editor
-    let editor = prompt_editor(&existing)?;
+    let editor = prompt_editor(existing)?;
 
     // template
-    let template = prompt_template(&existing)?;
+    let template = prompt_template(existing)?;
 
     // batch
-    let batch = prompt_batch(&existing)?;
+    let batch = prompt_batch(existing)?;
 
     Ok(SectionValues {
         notes_folder,
@@ -334,7 +337,7 @@ fn prompt_fields(doc: &DocumentMut, section_name: &str) -> Result<SectionValues,
     })
 }
 
-fn prompt_notes_folder(existing: &Table) -> Result<String, InitError> {
+fn prompt_notes_folder(existing: &dyn TableLike) -> Result<String, InitError> {
     let default = existing
         .get(NOTES_FOLDER_KEY)
         .and_then(|i| i.as_str())
@@ -370,7 +373,7 @@ fn prompt_notes_folder(existing: &Table) -> Result<String, InitError> {
     }
 }
 
-fn prompt_editor(existing: &Table) -> Result<String, InitError> {
+fn prompt_editor(existing: &dyn TableLike) -> Result<String, InitError> {
     let current = existing
         .get(EDITOR_KEY)
         .and_then(|i| i.as_str())
@@ -397,7 +400,7 @@ fn prompt_editor(existing: &Table) -> Result<String, InitError> {
     Ok(EDITOR_OPTIONS[idx].to_string())
 }
 
-fn prompt_template(existing: &Table) -> Result<Option<String>, InitError> {
+fn prompt_template(existing: &dyn TableLike) -> Result<Option<String>, InitError> {
     let current = existing
         .get(TEMPLATE_KEY)
         .and_then(|i| i.as_str())
@@ -419,7 +422,7 @@ fn prompt_template(existing: &Table) -> Result<Option<String>, InitError> {
     }
 }
 
-fn prompt_batch(existing: &Table) -> Result<usize, InitError> {
+fn prompt_batch(existing: &dyn TableLike) -> Result<usize, InitError> {
     let current: usize = existing
         .get(BATCH_KEY)
         .and_then(|i| i.as_integer())
@@ -520,23 +523,37 @@ fn backup_malformed_config(
     unreachable!("unbounded backup suffix search must return");
 }
 
-fn write_section(doc: &mut DocumentMut, name: &str, values: &SectionValues) {
+fn write_section(
+    doc: &mut DocumentMut,
+    name: &str,
+    values: &SectionValues,
+) -> Result<(), InitError> {
     let table = doc[name].or_insert(Item::Table(Table::new()));
-    let t = table.as_table_mut().expect("section must be a table");
+    let item_type = table.type_name();
+    let t = table.as_table_like_mut().ok_or_else(|| {
+        InitError::Other(format!(
+            "config entry `{name}` must be a table, not {}",
+            item_type
+        ))
+    })?;
 
-    t[NOTES_FOLDER_KEY] = toml_edit::value(values.notes_folder.as_str());
-    t[EDITOR_KEY] = toml_edit::value(values.editor.as_str());
+    t.insert(
+        NOTES_FOLDER_KEY,
+        toml_edit::value(values.notes_folder.as_str()),
+    );
+    t.insert(EDITOR_KEY, toml_edit::value(values.editor.as_str()));
 
     match &values.template {
         Some(tmpl) => {
-            t[TEMPLATE_KEY] = toml_edit::value(tmpl.as_str());
+            t.insert(TEMPLATE_KEY, toml_edit::value(tmpl.as_str()));
         }
         None => {
             t.remove(TEMPLATE_KEY);
         }
     }
 
-    t[BATCH_KEY] = toml_edit::value(values.batch as i64);
+    t.insert(BATCH_KEY, toml_edit::value(values.batch as i64));
+    Ok(())
 }
 
 fn write_atomic(path: &Path, content: &[u8]) -> io::Result<()> {
@@ -637,7 +654,8 @@ mod tests {
                 template: Some("Templates/Weekly.md".into()),
                 batch: 3,
             },
-        );
+        )
+        .unwrap();
         let toml = doc.to_string();
         assert!(toml.contains("notesFolder"), "must use notesFolder key");
         assert!(toml.contains("obsidian"));
@@ -647,6 +665,88 @@ mod tests {
             !toml.contains("notes_folder"),
             "must not use snake_case key"
         );
+    }
+
+    #[test]
+    fn write_section_rejects_scalar_section() {
+        let mut doc: DocumentMut = "default = 1\n".parse().unwrap();
+
+        let error = write_section(
+            &mut doc,
+            "default",
+            &SectionValues {
+                notes_folder: "~/Notes".into(),
+                editor: "generic".into(),
+                template: None,
+                batch: 1,
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            error.to_string(),
+            "config entry `default` must be a table, not integer"
+        );
+    }
+
+    #[test]
+    fn write_section_rejects_array_section() {
+        let mut doc: DocumentMut = "work = [1, 2]\n".parse().unwrap();
+
+        let error = write_section(
+            &mut doc,
+            "work",
+            &SectionValues {
+                notes_folder: "~/Notes".into(),
+                editor: "generic".into(),
+                template: None,
+                batch: 1,
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            error.to_string(),
+            "config entry `work` must be a table, not array"
+        );
+    }
+
+    #[test]
+    fn preflight_rejects_non_table_entry_before_section_selection() {
+        let dir = tempfile::tempdir().unwrap();
+        let doc: DocumentMut = "default = 1\n".parse().unwrap();
+
+        let error =
+            run_preflight_fixes(&doc, &dir.path().join("config.toml"), dir.path()).unwrap_err();
+
+        assert_eq!(
+            error.to_string(),
+            "config entry `default` must be a table, not integer"
+        );
+    }
+
+    #[test]
+    fn write_section_updates_inline_table() {
+        let mut doc: DocumentMut = "default = { editor = \"generic\", batch = 1 }\n"
+            .parse()
+            .unwrap();
+
+        write_section(
+            &mut doc,
+            "default",
+            &SectionValues {
+                notes_folder: "~/Notes".into(),
+                editor: "vscode".into(),
+                template: None,
+                batch: 2,
+            },
+        )
+        .unwrap();
+
+        let default = doc["default"].as_inline_table().unwrap();
+        assert_eq!(default[NOTES_FOLDER_KEY].as_str(), Some("~/Notes"));
+        assert_eq!(default[EDITOR_KEY].as_str(), Some("vscode"));
+        assert_eq!(default[BATCH_KEY].as_integer(), Some(2));
     }
 
     #[test]
@@ -664,7 +764,8 @@ mod tests {
                 template: None,
                 batch: 2,
             },
-        );
+        )
+        .unwrap();
         std::fs::write(&config_path, doc.to_string()).unwrap();
 
         let cfg = load_config("default", Some(&config_path)).unwrap();
@@ -700,7 +801,8 @@ mod tests {
                 template: None,
                 batch: 4,
             },
-        );
+        )
+        .unwrap();
         std::fs::write(&config_path, doc.to_string()).unwrap();
 
         // [default] must be unchanged
