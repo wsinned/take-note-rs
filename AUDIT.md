@@ -78,13 +78,19 @@ mark their checkboxes when the corresponding change and tests are complete.
   backups are cleaned up on failure, successful backups are retained if source
   removal fails, and the behavior is covered by tests and README documentation.
 
-- [ ] 6. **High: user-controlled config structure can panic `init`**
+- [x] 6. **High: user-controlled config structure can panic `init`**
 
   Preflight skips non-table top-level values at
   `src/commands/init.rs:126-129`, but section selection later exposes them and
   eventually uses `expect("section must be a table")` around
   `src/commands/init.rs:463-466`. Config such as `default = 1` can therefore
   panic rather than produce a normal diagnostic.
+
+  Resolution: preflight now rejects scalar and array top-level entries with a
+  contextual error before section selection, and section writes return an
+  error instead of panicking if validation is bypassed. Standard and inline
+  TOML tables are both supported and editable. Regression tests cover scalar,
+  array, and inline-table entries.
 
 - [ ] 7. **Medium: release-tool cache action uses deprecated Node.js 20**
 
