@@ -34,7 +34,9 @@ mark their checkboxes when the corresponding change and tests are complete.
   helper. `AlreadyExists` is treated as finding an existing note, so a
   concurrent creator's contents are not overwritten. Regression tests cover
   existing-file preservation and simultaneous creation with exactly one
-  winner.
+  winner. Command-level coverage is still needed to prove that daily and weekly
+  invocations report `created: false`, preserve existing contents byte for
+  byte, and skip template loading when the destination already exists.
 
 - [x] 3. **High: two release workflows compete for the same release**
 
@@ -110,7 +112,10 @@ mark their checkboxes when the corresponding change and tests are complete.
   format options or validating an insertion heading
   (`src/commands/daily.rs:83-123`, `src/commands/weekly.rs:98-155`). An
   unsuccessful invocation can leave new notes behind. Prefer Clap typed values
-  and complete validation before mutation.
+  and complete validation before mutation. Add CLI regression tests asserting
+  that invalid `--format`, invalid `--editor`, `--insert` without append
+  content, and a missing insertion heading fail without creating or modifying
+  files.
 
 - [ ] 9. **Medium: editor launch failures return success**
 
@@ -146,7 +151,10 @@ mark their checkboxes when the corresponding change and tests are complete.
   `src/helpers/markdown.rs:71-120` interprets heading-looking lines inside
   fenced code blocks as real headings. It also omits CommonMark details such as
   leading indentation and closing `#` characters. Content can be inserted into
-  the wrong section.
+  the wrong section. Regression coverage should include fenced code blocks,
+  duplicate parent headings, six- versus seven-hash headings, `#NoSpace`, CRLF
+  input, and optional closing hashes. The insertion CLI should also verify that
+  a missing heading leaves the original note byte-for-byte unchanged.
 
 - [ ] 14. **Medium: template paths can escape `notesFolder`**
 
@@ -199,25 +207,83 @@ mark their checkboxes when the corresponding change and tests are complete.
   mutation, and successful headless JSON note creation with the reported path
   verified on disk.
 
+- [ ] 19. **High: weekly command behavior lacks end-to-end coverage**
+
+  `src/commands/weekly.rs:79-156` has no CLI integration coverage for its main
+  workflow. A regression in argument parsing, date batching, path generation,
+  template expansion, output formatting, or existing-file reporting could pass
+  all current helper tests. Add a
+  `weekly thisWeek --batch 3 --no-open --format json` test that verifies three
+  Monday dates spaced seven days apart, their paths and files, and
+  `created: true`; rerun it to verify `created: false` and unchanged contents.
+  Text and silent output modes should also be exercised.
+
+- [ ] 20. **High: configuration precedence is not verified through commands**
+
+  Config loading and merging have unit coverage, but no subprocess test proves
+  that `src/commands/daily.rs:62-67` and `src/commands/weekly.rs:68-73` use the
+  intended effective configuration. Add integration cases for `[default]` plus
+  `[daily]` or `[weekly]`, an explicitly named profile, and CLI overrides,
+  asserting the final notes folder, template, editor, and weekly batch where
+  applicable. These tests should also cover malformed TOML failing before any
+  notes directory is created. Unknown named profiles remain the separate
+  behavioral defect in finding 11.
+
+- [ ] 21. **Medium: append and insert modes lack CLI integration coverage**
+
+  Atomic append and insertion helpers have focused unit tests, but
+  `src/commands/daily.rs:104-111` and `src/commands/weekly.rs:124-139` are not
+  exercised through Clap parsing and command resolution. Add tests that append
+  to an existing note without a trailing newline, insert before the next
+  sibling heading, print only the target path, and force weekly append mode to
+  one file even when a larger batch is configured. Exercise positional `WHEN`,
+  flag-only `--when`, missing `WHEN`, and both forms together because the two
+  optional positional arguments make this interface particularly
+  regression-prone.
+
+- [ ] 22. **Medium: the interactive init workflow is largely untested**
+
+  Tests in `src/commands/init.rs:592-822` cover backup and TOML-writing helpers,
+  but not the workflow and exit-status mapping in `src/commands/init.rs:50-106`.
+  Add terminal-backed integration tests or isolate prompt I/O behind a testable
+  boundary. Cover fresh setup, accepting and declining malformed-config
+  recovery, invalid-editor repair, missing-folder creation, new-section name
+  validation, batch boundaries 1 and 8, and interrupted versus ordinary prompt
+  errors producing exit statuses 130 and 1. Pre-flight repair should verify
+  exit status 2 and preservation of unrelated fields.
+
+- [ ] 23. **Low: inexpensive boundary cases remain uncovered**
+
+  Add date tests crossing leap day and December/January, including a weekly
+  batch crossing a year boundary; an invalid UTF-8 template test that expects
+  `TemplateError::Io`; and an exact JSON deserialization assertion that includes
+  the `date` field. These cases are lower risk than command orchestration but
+  are small, deterministic additions that protect filename and automation
+  contracts.
+
 ## Testing Gaps
 
-The project now has 60 unit tests and 3 CLI integration tests. Notable
-omissions are:
+The project currently has 60 unit tests and 3 CLI integration tests. Helper
+coverage is strongest around date calculations, config merging, atomic note
+creation and append mechanics, malformed-config backups, and basic heading
+insertion. The principal omissions are tracked in findings 2, 8, 13, and 19-23:
 
-- Broader CLI exit status and stderr behavior
-- Concurrent note creation
-- Permission and symlink preservation
-- Malformed `init` recovery
-- Unknown profiles and config fields
-- Cross-platform editor launching
-- Weekly partial batch failures
+- Broader CLI exit status, stderr, and no-mutation behavior
+- Weekly batching and output through the real command interface
+- Config precedence and existing-note preservation through command execution
+- Append and insert argument parsing and command orchestration
+- Interactive `init` prompts and exit-status mapping
 - Markdown fences and CommonMark heading variants
+- Cross-platform editor launching and weekly partial batch failures
+
+`cargo test --all-features` passes all 63 tests. Numeric line and branch
+coverage has not been measured because `cargo-llvm-cov` is not installed.
 
 ## Audit Verification
 
 - `cargo fmt --all -- --check`: passed
 - `cargo clippy --all-targets --all-features -- -D warnings`: passed
-- `cargo test --all-features`: 49 passed
+- `cargo test --all-features`: 63 passed
 - `cargo tree --duplicates`: two `thiserror` major versions through
   `dialoguer`; harmless but mildly wasteful
 
