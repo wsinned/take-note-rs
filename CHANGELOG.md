@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.3.6 - 2026-07-16
+#### Bug Fixes
+- raise MSRV for let chains - (74714c1) - Dennis Woodruff
+#### Documentation
+- remove invalid library examples - (6a7983a) - Dennis Woodruff
+#### Tests
+- add CLI integration coverage - (e3c4fd5) - Dennis Woodruff
+#### Continuous Integration
+- upgrade release tool cache action - (47e0785) - Dennis Woodruff
+#### Miscellaneous Chores
+- define platform and MSRV contract - (9986588) - Dennis Woodruff
+
+- - -
+
 ## v2.3.5 - 2026-07-16
 #### Bug Fixes
 - reject invalid config section structures - (aabfe69) - Dennis Woodruff
