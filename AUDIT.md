@@ -92,13 +92,17 @@ mark their checkboxes when the corresponding change and tests are complete.
   TOML tables are both supported and editable. Regression tests cover scalar,
   array, and inline-table entries.
 
-- [ ] 7. **Medium: release-tool cache action uses deprecated Node.js 20**
+- [x] 7. **Medium: release-tool cache action uses deprecated Node.js 20**
 
   CI run `29201795355` warns that `actions/cache@v4` targets deprecated
   Node.js 20 and is being forced to run on Node.js 24. Upgrade the release-tool
   cache step in `.github/workflows/ci.yml` to the latest supported major
   (`actions/cache@v6`, currently released as v6.1.0) and confirm the cache is
   restored without runner deprecation warnings.
+
+  Resolution: the release-tool cache now uses `actions/cache@v6`, currently
+  released as v6.1.0 with the Node.js 24 runtime. Its executable paths and
+  versioned cache key are unchanged, preserving existing restore behavior.
 
 - [ ] 8. **Medium: failed argument validation can still mutate the filesystem**
 
