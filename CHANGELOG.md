@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.3.7 - 2026-07-17
+#### Documentation
+- record Windows CLI test isolation gap - (b69167d) - Dennis Woodruff
+- record test coverage gaps - (bdeb985) - Dennis Woodruff
+#### Tests
+- cover weekly CLI workflow - (1fe1f0b) - Dennis Woodruff
+
+- - -
+
 ## v2.3.6 - 2026-07-16
 #### Bug Fixes
 - raise MSRV for let chains - (74714c1) - Dennis Woodruff
