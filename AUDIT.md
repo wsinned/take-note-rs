@@ -267,6 +267,16 @@ mark their checkboxes when the corresponding change and tests are complete.
   are small, deterministic additions that protect filename and automation
   contracts.
 
+- [ ] 24. **Medium: CLI tests are not isolated from user configuration on Windows**
+
+  `tests/cli.rs` sets `HOME` and `USERPROFILE` to temporary directories, but
+  `dirs::home_dir()` uses the Known Folder API on Windows and can still resolve
+  the real user profile. CLI tests may therefore load the user's
+  `.config/take-note/config.toml`, allowing malformed configuration or weekly
+  template settings to cause environment-dependent failures. Provide a
+  platform-independent config-path override or another isolation mechanism for
+  subprocess tests.
+
 ## Testing Gaps
 
 The project currently has 60 unit tests and 6 CLI integration tests. Helper
