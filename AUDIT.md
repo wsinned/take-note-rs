@@ -207,7 +207,7 @@ mark their checkboxes when the corresponding change and tests are complete.
   mutation, and successful headless JSON note creation with the reported path
   verified on disk.
 
-- [ ] 19. **High: weekly command behavior lacks end-to-end coverage**
+- [x] 19. **High: weekly command behavior lacks end-to-end coverage**
 
   `src/commands/weekly.rs:79-156` has no CLI integration coverage for its main
   workflow. A regression in argument parsing, date batching, path generation,
@@ -217,6 +217,12 @@ mark their checkboxes when the corresponding change and tests are complete.
   Monday dates spaced seven days apart, their paths and files, and
   `created: true`; rerun it to verify `created: false` and unchanged contents.
   Text and silent output modes should also be exercised.
+
+  Resolution: CLI integration tests now cover a three-note `thisWeek` batch in
+  JSON mode, including Monday dates, seven-day spacing, exact paths, template
+  expansion, file creation, and `created` reporting. A second invocation
+  verifies existing contents remain unchanged and reports `created: false`.
+  Separate cases exercise text path reporting and silent output.
 
 - [ ] 20. **High: configuration precedence is not verified through commands**
 
@@ -263,10 +269,10 @@ mark their checkboxes when the corresponding change and tests are complete.
 
 ## Testing Gaps
 
-The project currently has 60 unit tests and 3 CLI integration tests. Helper
+The project currently has 60 unit tests and 6 CLI integration tests. Helper
 coverage is strongest around date calculations, config merging, atomic note
 creation and append mechanics, malformed-config backups, and basic heading
-insertion. The principal omissions are tracked in findings 2, 8, 13, and 19-23:
+insertion. The principal omissions are tracked in findings 2, 8, 13, and 20-23:
 
 - Broader CLI exit status, stderr, and no-mutation behavior
 - Weekly batching and output through the real command interface
@@ -276,14 +282,14 @@ insertion. The principal omissions are tracked in findings 2, 8, 13, and 19-23:
 - Markdown fences and CommonMark heading variants
 - Cross-platform editor launching and weekly partial batch failures
 
-`cargo test --all-features` passes all 63 tests. Numeric line and branch
+`cargo test --all-features` passes all 66 tests. Numeric line and branch
 coverage has not been measured because `cargo-llvm-cov` is not installed.
 
 ## Audit Verification
 
 - `cargo fmt --all -- --check`: passed
 - `cargo clippy --all-targets --all-features -- -D warnings`: passed
-- `cargo test --all-features`: 63 passed
+- `cargo test --all-features`: 66 passed
 - `cargo tree --duplicates`: two `thiserror` major versions through
   `dialoguer`; harmless but mildly wasteful
 
