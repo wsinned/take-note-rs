@@ -14,6 +14,7 @@
       ];
 
       lib = nixpkgs.lib;
+      cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
       forAllSystems = lib.genAttrs systems;
     in
     {
@@ -25,7 +26,7 @@
         {
           default = pkgs.rustPlatform.buildRustPackage {
             pname = "take-note";
-            version = "2.3.7";
+            version = cargoToml.package.version;
 
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;

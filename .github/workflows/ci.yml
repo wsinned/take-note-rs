@@ -40,9 +40,27 @@ jobs:
         with:
           failOnWarnings: true
 
+  nix-validation:
+    name: Nix Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v20
+
+      - name: Check flake
+        run: nix flake check
+
+      - name: Build package
+        run: nix build
+
+      - name: Smoke test package
+        run: ./result/bin/take-note --help
+
   bump-version:
     name: Bump Version
-    needs: test
+    needs: [test, nix-validation]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
