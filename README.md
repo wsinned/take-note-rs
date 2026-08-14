@@ -27,6 +27,29 @@ To upgrade later, run the same command again.
 
 > Install eget itself: see [zyedidia/eget](https://github.com/zyedidia/eget)
 
+### Nix flakes (Linux/macOS)
+
+The repository provides a Nix flake for Linux and macOS systems. It builds the
+Rust crate from `Cargo.lock`.
+
+```bash
+# Run from the current checkout
+nix run . -- --help
+
+# Run from GitHub without installing
+nix run github:wsinned/take-note-rs -- --help
+
+# Build from the current checkout
+nix build
+./result/bin/take-note --help
+
+# Build from GitHub
+nix build github:wsinned/take-note-rs
+
+# Install into your Nix profile
+nix profile install github:wsinned/take-note-rs
+```
+
 ### Manual download
 
 Download the appropriate binary for your platform from the [releases page](https://github.com/wsinned/take-note-rs/releases):
