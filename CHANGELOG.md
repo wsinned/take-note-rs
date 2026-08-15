@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.4.0 - 2026-08-15
+#### Features
+- add Nix flake installation - (ba9cff7) - Dennis Woodruff
+#### Continuous Integration
+- validate Nix flake - (290c97d) - Dennis Woodruff
+#### Miscellaneous Chores
+- raise Rust baseline to 1.92 - (6795ce4) - Dennis Woodruff
+
+- - -
+
 ## v2.3.7 - 2026-07-17
 #### Documentation
 - record Windows CLI test isolation gap - (b69167d) - Dennis Woodruff
