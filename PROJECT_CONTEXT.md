@@ -17,6 +17,7 @@ Rust rewrite of take-note-cli (migrated from Deno/TypeScript).
 ## CI/CD
 - GitHub Actions with Node 24 compatible versions
 - Clippy + formatting checks via git hooks
+- Nix flake has been built, installed, and used successfully on NixOS
 
 ## Next
 - Test build pipeline and platform-specific builds
