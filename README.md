@@ -264,3 +264,5 @@ src/
 - [x] `take-note init` setup wizard
 - [x] Insert mode with heading locators
 - [x] Append mode (`take-note daily today "text"`)
+- [ ] Low priority: create and cache Nix builds; not urgent because only one
+      target device currently uses Nix.
