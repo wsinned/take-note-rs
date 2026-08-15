@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.4.1 - 2026-08-15
+#### Documentation
+- add Nix build cache roadmap item - (b6bfcf5) - Dennis Woodruff
+
+- - -
+
 ## v2.4.0 - 2026-08-15
 #### Features
 - add Nix flake installation - (ba9cff7) - Dennis Woodruff
