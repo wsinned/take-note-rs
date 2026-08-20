@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.4.2 - 2026-08-20
+#### Documentation
+- adds direnv instructions - (95ceefe) - Dennis Woodruff
+#### Miscellaneous Chores
+- fixes broken commit hooks - (bd8028b) - Dennis Woodruff
+- adds .envrc and ignores direnv folder - (d6b556e) - Dennis Woodruff
+
+- - -
+
 ## v2.4.1 - 2026-08-15
 #### Documentation
 - add Nix build cache roadmap item - (b6bfcf5) - Dennis Woodruff
