@@ -218,9 +218,10 @@ Append and insert modes are always headless. They create the resolved note if mi
 
 ## Development
 
-After cloning, configure git to use the repo's hooks (runs fmt, clippy, and tests before each commit):
+After cloning, configure git to use direnv, the repo's hooks (runs fmt, clippy, and tests before each commit):
 
 ```bash
+direnv allow
 git config core.hooksPath .githooks
 ```
 
