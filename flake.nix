@@ -49,6 +49,23 @@
         };
       });
 
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+        in
+        {
+          default = pkgs.mkShell {
+            packages = with pkgs; [
+              cargo
+              rustc
+              rustfmt
+              clippy
+            ];
+          };
+        }
+      );
+
       checks = forAllSystems (system: {
         default = self.packages.${system}.default;
       });

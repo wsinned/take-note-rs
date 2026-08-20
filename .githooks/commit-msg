@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Commit-msg hook: enforce conventional commit subject lines.
 
 set -euo pipefail
@@ -18,7 +18,7 @@ if [[ "$subject" == Merge\ * ]]; then
 fi
 
 if ! printf '%s\n' "$subject" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?!?: .+'; then
-    cat >&2 <<'EOF'
+    cat >&2 << 'EOF'
 commit-msg hook: commit subject must follow conventional commits
 Expected examples:
   feat: add markdown heading helper
