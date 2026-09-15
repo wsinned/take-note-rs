@@ -43,11 +43,14 @@ pub enum ConfigError {
     Io(#[from] std::io::Error),
     #[error("TOML parse error: {0}")]
     Parse(#[from] toml::de::Error),
+    #[error("config profile '{0}' not found")]
+    MissingProfile(String),
 }
 
 /// Loads a named config section, merging with built-in defaults.
 ///
-/// Falls back to `[default]` if the named section doesn't exist.
+/// Returns [`ConfigError::MissingProfile`] if a non-default named section
+/// doesn't exist.
 /// Home directory (`~`) is expanded in path fields.
 #[allow(dead_code)]
 pub fn load_config(name: &str, config_path: Option<&Path>) -> Result<NamedConfig, ConfigError> {
@@ -86,7 +89,11 @@ pub fn load_config_with_fallback(
     // Determine the effective section to use
     let section = if name != "default" {
         // Explicit --config flag was used, look up that section directly
-        let named_section = file.sections.get(name).cloned().unwrap_or_default();
+        let named_section = file
+            .sections
+            .get(name)
+            .cloned()
+            .ok_or_else(|| ConfigError::MissingProfile(name.to_string()))?;
         merge_over_default(named_section, &default_section)
     } else {
         // No --config flag, use command-specific section if available
@@ -232,8 +239,57 @@ notesFolder = "/tmp/notes"
         )
         .unwrap();
 
-        let cfg = load_config_with_fallback("work", None, Some(tmp.path())).unwrap();
+        // No explicit --config, should use [default]
+        let cfg = load_config_with_fallback("default", None, Some(tmp.path())).unwrap();
         assert_eq!(cfg.notes_folder, Some("/tmp/notes".to_string()));
+    }
+
+    #[test]
+    fn test_load_config_explicit_missing_profile_returns_error() {
+        let mut tmp = tempfile::NamedTempFile::new().unwrap();
+        write!(
+            tmp,
+            r#"
+[default]
+notesFolder = "/tmp/notes"
+"#
+        )
+        .unwrap();
+
+        // Explicitly requesting a non-existent profile should error
+        let result = load_config_with_fallback("work", None, Some(tmp.path()));
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            ConfigError::MissingProfile(ref name) if name == "work"
+        ));
+    }
+
+    #[test]
+    fn test_load_config_explicit_missing_profile_with_command_fallback_returns_error() {
+        let mut tmp = tempfile::NamedTempFile::new().unwrap();
+        write!(
+            tmp,
+            r#"
+[default]
+notesFolder = "/tmp/notes"
+editor = "obsidian"
+template = "Templates/Weekly.md"
+batch = 3
+
+[weekly]
+template = "Templates/Custom-Weekly.md"
+"#
+        )
+        .unwrap();
+
+        // Even with a command fallback available, an explicit missing profile is an error
+        let result = load_config_with_fallback("wrok", Some("weekly"), Some(tmp.path()));
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            ConfigError::MissingProfile(ref name) if name == "wrok"
+        ));
     }
 
     #[test]
