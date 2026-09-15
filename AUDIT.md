@@ -131,12 +131,18 @@ mark their checkboxes when the corresponding change and tests are complete.
   `src/handlers/mod.rs:51-54`, but `start` is normally a `cmd.exe` built-in and
   will not execute this way.
 
-- [ ] 11. **Medium: explicit profile typos silently select the default profile**
+- [x] 11. **Medium: explicit profile typos silently select the default profile**
 
   At `src/helpers/config.rs:103-106`, an unknown `--config wrok` becomes an
   empty config merged over `[default]`. That can create a note in the wrong
   vault without warning. Explicitly requested missing profiles should be
   errors.
+
+  Resolution: `load_config_with_fallback` now returns `ConfigError::MissingProfile`
+  when an explicit `--config` name does not match any section in the config
+  file. The default, command-specific, and fallback behavior is preserved
+  when no explicit profile is selected. Regression tests cover missing
+  explicit profiles with and without command-specific fallbacks.
 
 - [ ] 12. **Medium: config path behavior is not platform-native and has a dangerous fallback**
 
