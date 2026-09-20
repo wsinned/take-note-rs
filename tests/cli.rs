@@ -1,5 +1,5 @@
 use assert_cmd::cargo::cargo_bin_cmd;
-use chrono::{Datelike, Duration, NaiveDate, Weekday};
+use chrono::{Datelike, Duration, Local, NaiveDate, Weekday};
 use predicates::prelude::*;
 use std::path::Path;
 
@@ -28,6 +28,223 @@ fn invalid_when_fails_without_creating_notes() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid when option"));
+
+    assert!(!notes.exists());
+}
+
+#[test]
+fn daily_invalid_format_fails_without_creating_notes() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+
+    cargo_bin_cmd!("take-note")
+        .env("HOME", home.path())
+        .env("USERPROFILE", home.path())
+        .args(["daily", "today", "--notes-folder"])
+        .arg(&notes)
+        .args(["--no-open", "--format", "invalid"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("invalid format"));
+
+    assert!(!notes.exists());
+}
+
+#[test]
+fn daily_invalid_editor_fails_without_creating_notes() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+
+    cargo_bin_cmd!("take-note")
+        .env("HOME", home.path())
+        .env("USERPROFILE", home.path())
+        .args(["daily", "today", "--notes-folder"])
+        .arg(&notes)
+        .args(["--editor", "invalid"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("invalid Editor"));
+
+    assert!(!notes.exists());
+}
+
+#[test]
+fn daily_insert_without_append_fails_without_creating_notes() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+
+    cargo_bin_cmd!("take-note")
+        .env("HOME", home.path())
+        .env("USERPROFILE", home.path())
+        .args(["daily", "today", "--notes-folder"])
+        .arg(&notes)
+        .args(["--insert", "Heading"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("--insert requires APPEND"));
+
+    assert!(!notes.exists());
+}
+
+#[test]
+fn daily_missing_heading_preserves_existing_note_bytes() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+
+    let today = Local::now().naive_local().date();
+    let path_part = format!("{:04}/{:02}", today.year(), today.month());
+    let file_name = format!(
+        "{:04}-{:02}-{:02}-Daily-log.md",
+        today.year(),
+        today.month(),
+        today.day()
+    );
+    let note_path = notes.join(&path_part).join(&file_name);
+    std::fs::create_dir_all(notes.join(&path_part)).unwrap();
+    let original = "# Daily Log\n\n## Notes\nexisting".to_string();
+    std::fs::write(&note_path, &original).unwrap();
+
+    cargo_bin_cmd!("take-note")
+        .env("HOME", home.path())
+        .env("USERPROFILE", home.path())
+        .args(["daily", "today", "content", "--notes-folder"])
+        .arg(&notes)
+        .args(["--insert", "Missing"])
+        .args(["--no-open", "--format", "json"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("heading path not found"));
+
+    assert_eq!(std::fs::read_to_string(&note_path).unwrap(), original);
+}
+
+#[test]
+fn daily_missing_heading_does_not_create_a_new_note() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+    let template = home.path().join("daily-template.md");
+    std::fs::write(&template, "# Daily Log\n\n## Notes\n").unwrap();
+
+    cargo_bin_cmd!("take-note")
+        .env("HOME", home.path())
+        .env("USERPROFILE", home.path())
+        .args(["daily", "today", "content", "--notes-folder"])
+        .arg(&notes)
+        .arg("--template")
+        .arg(&template)
+        .args(["--insert", "Missing"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("heading path not found"));
+
+    assert!(!notes.exists());
+}
+
+#[test]
+fn weekly_invalid_format_fails_without_creating_notes() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+
+    cargo_bin_cmd!("take-note")
+        .env("HOME", home.path())
+        .env("USERPROFILE", home.path())
+        .args(["weekly", "thisWeek", "--notes-folder"])
+        .arg(&notes)
+        .args(["--no-open", "--format", "invalid"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("invalid format"));
+
+    assert!(!notes.exists());
+}
+
+#[test]
+fn weekly_invalid_editor_fails_without_creating_notes() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+
+    cargo_bin_cmd!("take-note")
+        .env("HOME", home.path())
+        .env("USERPROFILE", home.path())
+        .args(["weekly", "thisWeek", "--notes-folder"])
+        .arg(&notes)
+        .args(["--editor", "invalid"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("invalid Editor"));
+
+    assert!(!notes.exists());
+}
+
+#[test]
+fn weekly_insert_without_append_fails_without_creating_notes() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+
+    cargo_bin_cmd!("take-note")
+        .env("HOME", home.path())
+        .env("USERPROFILE", home.path())
+        .args(["weekly", "thisWeek", "--notes-folder"])
+        .arg(&notes)
+        .args(["--insert", "Heading"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("--insert requires APPEND"));
+
+    assert!(!notes.exists());
+}
+
+#[test]
+fn weekly_missing_heading_preserves_existing_note_bytes() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+
+    let today = Local::now().naive_local().date();
+    let monday = today - Duration::days(today.weekday().num_days_from_monday() as i64);
+    let path_part = format!("{:04}/{:02}", monday.year(), monday.month());
+    let file_name = format!(
+        "{:04}-{:02}-{:02}-Weekly-log.md",
+        monday.year(),
+        monday.month(),
+        monday.day()
+    );
+    let note_path = notes.join(&path_part).join(&file_name);
+    std::fs::create_dir_all(notes.join(&path_part)).unwrap();
+    let original = "# Weekly Log\n\n## Monday\nexisting".to_string();
+    std::fs::write(&note_path, &original).unwrap();
+
+    cargo_bin_cmd!("take-note")
+        .env("HOME", home.path())
+        .env("USERPROFILE", home.path())
+        .args(["weekly", "thisWeek", "content", "--notes-folder"])
+        .arg(&notes)
+        .args(["--insert", "Missing"])
+        .args(["--no-open", "--format", "json"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("heading path not found"));
+
+    assert_eq!(std::fs::read_to_string(&note_path).unwrap(), original);
+}
+
+#[test]
+fn weekly_missing_heading_does_not_create_a_new_note() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+    let template = home.path().join("weekly-template.md");
+    std::fs::write(&template, "# Weekly Log\n\n## Monday\n").unwrap();
+
+    cargo_bin_cmd!("take-note")
+        .env("HOME", home.path())
+        .env("USERPROFILE", home.path())
+        .args(["weekly", "thisWeek", "content", "--notes-folder"])
+        .arg(&notes)
+        .arg("--template")
+        .arg(&template)
+        .args(["--insert", "Missing"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("heading path not found"));
 
     assert!(!notes.exists());
 }

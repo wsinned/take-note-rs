@@ -93,12 +93,36 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
     const SUFFIX: &str = "Weekly-log";
     const FILE_EXT: &str = "md";
 
+    let format = if merged.append.is_none() && merged.no_open {
+        Some(parse_format(merged.format.as_deref())?)
+    } else {
+        None
+    };
+    let editor = if merged.append.is_none() && !merged.no_open {
+        Some(parse_editor(merged.editor.as_deref())?)
+    } else {
+        None
+    };
+
+    if let (Some(heading_path), Some(_)) = (merged.insert.as_deref(), merged.append.as_deref()) {
+        let first_date = dates.first().ok_or("internal error: no dates resolved")?;
+        let (path_part, file_name) = name_from_date(*first_date, SUFFIX, FILE_EXT);
+        let full_path = PathBuf::from(&notes_folder).join(&path_part);
+        let file_path = full_path.join(&file_name);
+        let content = if file_path.exists() {
+            std::fs::read_to_string(&file_path)?
+        } else {
+            let template_content = get_template_content(&notes_folder, merged.template.as_deref())?;
+            update_template_variables(&template_content, &date_for_header(*first_date))
+        };
+        crate::commands::preflight_insert_heading(heading_path, &content)?;
+    }
+
     let mut results = Vec::new();
 
     for date in dates {
         let (path_part, file_name) = name_from_date(date, SUFFIX, FILE_EXT);
         let full_path = PathBuf::from(&notes_folder).join(&path_part);
-
         std::fs::create_dir_all(&full_path)?;
         let file_path = full_path.join(&file_name);
         let created = if file_path.exists() {
@@ -139,15 +163,14 @@ pub fn run(args: WeeklyArgs) -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    if merged.no_open {
-        let format = parse_format(merged.format.as_deref())?;
+    if let Some(format) = format {
         if let Some(output) = format_output(&results, format) {
             println!("{output}");
         }
         return Ok(());
     }
 
-    let editor = parse_editor(merged.editor.as_deref())?;
+    let editor = editor.ok_or("internal error: editor was not resolved")?;
     let first_file = &results
         .first()
         .ok_or("internal error: no dates resolved")?

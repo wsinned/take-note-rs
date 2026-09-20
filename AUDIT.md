@@ -106,7 +106,7 @@ mark their checkboxes when the corresponding change and tests are complete.
   released as v6.1.0 with the Node.js 24 runtime. Its executable paths and
   versioned cache key are unchanged, preserving existing restore behavior.
 
-- [ ] 8. **Medium: failed argument validation can still mutate the filesystem**
+- [x] 8. **Medium: failed argument validation can still mutate the filesystem**
 
   Daily and weekly create directories and files before parsing all editor or
   format options or validating an insertion heading
@@ -116,6 +116,12 @@ mark their checkboxes when the corresponding change and tests are complete.
   that invalid `--format`, invalid `--editor`, `--insert` without append
   content, and a missing insertion heading fail without creating or modifying
   files.
+
+  Resolution: daily and weekly now validate the effective output format,
+  editor, append/insert combination, and insertion heading before creating
+  directories or notes. Heading validation uses either the existing note or
+  the fully rendered template. CLI regressions prove failures leave new note
+  trees absent and existing notes byte-for-byte unchanged.
 
 - [ ] 9. **Medium: editor launch failures return success**
 
@@ -285,10 +291,10 @@ mark their checkboxes when the corresponding change and tests are complete.
 
 ## Testing Gaps
 
-The project currently has 60 unit tests and 6 CLI integration tests. Helper
+The project currently has 62 unit tests and 16 CLI integration tests. Helper
 coverage is strongest around date calculations, config merging, atomic note
 creation and append mechanics, malformed-config backups, and basic heading
-insertion. The principal omissions are tracked in findings 2, 8, 13, and 20-23:
+insertion. The principal omissions are tracked in findings 2, 13, and 20-23:
 
 - Broader CLI exit status, stderr, and no-mutation behavior
 - Weekly batching and output through the real command interface
@@ -298,14 +304,14 @@ insertion. The principal omissions are tracked in findings 2, 8, 13, and 20-23:
 - Markdown fences and CommonMark heading variants
 - Cross-platform editor launching and weekly partial batch failures
 
-`cargo test --all-features` passes all 66 tests. Numeric line and branch
+`cargo test --all-features` passes all 78 tests. Numeric line and branch
 coverage has not been measured because `cargo-llvm-cov` is not installed.
 
 ## Audit Verification
 
 - `cargo fmt --all -- --check`: passed
 - `cargo clippy --all-targets --all-features -- -D warnings`: passed
-- `cargo test --all-features`: 66 passed
+- `cargo test --all-features`: 78 passed (62 unit, 16 CLI integration)
 - `cargo tree --duplicates`: two `thiserror` major versions through
   `dialoguer`; harmless but mildly wasteful
 

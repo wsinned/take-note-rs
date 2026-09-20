@@ -34,18 +34,7 @@ pub(crate) fn insert_blob_at_heading_path_atomic(
     blob: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let content = std::fs::read_to_string(path)?;
-    let headings: Vec<&str> = heading_path
-        .split('/')
-        .map(str::trim)
-        .filter(|heading| !heading.is_empty())
-        .collect();
-
-    if headings.is_empty() {
-        return Err("heading path is required".into());
-    }
-
-    let position = crate::helpers::markdown::section_end_for_heading_path(&content, &headings)
-        .ok_or_else(|| format!("heading path not found: {heading_path}"))?;
+    let position = insert_position(&content, heading_path)?;
 
     let mut insertion = String::new();
     if position > 0 && !content[..position].ends_with('\n') {
@@ -63,6 +52,28 @@ pub(crate) fn insert_blob_at_heading_path_atomic(
 
     write_atomic(path, updated.as_bytes())?;
     Ok(())
+}
+
+pub(crate) fn preflight_insert_heading(
+    heading_path: &str,
+    content: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    insert_position(content, heading_path).map(|_| ())
+}
+
+fn insert_position(content: &str, heading_path: &str) -> Result<usize, Box<dyn std::error::Error>> {
+    let headings: Vec<&str> = heading_path
+        .split('/')
+        .map(str::trim)
+        .filter(|heading| !heading.is_empty())
+        .collect();
+
+    if headings.is_empty() {
+        return Err("heading path is required".into());
+    }
+
+    crate::helpers::markdown::section_end_for_heading_path(content, &headings)
+        .ok_or_else(|| format!("heading path not found: {heading_path}").into())
 }
 
 fn write_atomic(path: &Path, content: &[u8]) -> std::io::Result<()> {
