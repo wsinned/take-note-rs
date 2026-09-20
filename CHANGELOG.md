@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.4.4 - 2026-09-20
+#### Bug Fixes
+- validate note options before writing - (ae8f566) - Dennis Woodruff
+
+- - -
+
 ## v2.4.3 - 2026-09-15
 #### Bug Fixes
 - reject unknown config profiles - (b662da6) - Dennis Woodruff
