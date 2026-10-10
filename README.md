@@ -179,17 +179,28 @@ take-note weekly thisWeek --insert "Weekly Log/Monday" "- Shipped insert mode"
 
 ```bash
 take-note daily today
+take-note daily 2026-10-10
+take-note daily --when 2026-10-10
+take-note daily 2026-10-10 "- Follow up on invoices"
 take-note daily today "- Follow up on invoices"
 take-note daily today --insert "Daily Log/Notes" "- Follow up on invoices"
 ```
 
-### `--when` options (daily)
+### `WHEN` / `--when` options (daily)
 
 | Value | Description |
 |-------|-------------|
 | `yesterday` | Yesterday's date |
 | `today` | Today's date |
 | `tomorrow` | Tomorrow's date |
+| `YYYY-MM-DD` | A specific calendar date, e.g. `2026-10-10` |
+
+Explicit dates must use zero-padded `YYYY-MM-DD` with a year from `0001` to
+`9999`. Invalid calendar dates are rejected before creating note directories or
+files. Past and future dates are supported. The selected date determines the
+`YYYY/MM/YYYY-MM-DD-Daily-log.md` path, template `{{date}}`, and JSON date.
+Existing notes are reused without overwriting their contents; append and insert
+work as usual. Pass the date either positionally or with `--when`, not both.
 
 ### Templates
 
@@ -258,6 +269,7 @@ src/
 
 - [x] Weekly notes
 - [x] Daily notes
+- [x] Daily notes for a specific date (`daily YYYY-MM-DD` or `daily --when YYYY-MM-DD`)
 - [x] Headless mode (`--no-open`, `--format`)
 - [x] Config file support
 - [x] Named configs

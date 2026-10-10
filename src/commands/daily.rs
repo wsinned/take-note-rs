@@ -12,7 +12,7 @@ use chrono::Datelike;
 /// Arguments for the daily note command.
 #[derive(Args, Clone, Debug)]
 pub struct DailyArgs {
-    /// Which day's note to open
+    /// Day to open: yesterday, today, tomorrow, or YYYY-MM-DD (years 0001–9999)
     #[arg(value_name = "WHEN")]
     when: Option<String>,
 
@@ -24,7 +24,7 @@ pub struct DailyArgs {
     #[arg(long, value_name = "HEADING_PATH")]
     insert: Option<String>,
 
-    /// Which day's note to open
+    /// Day to open: yesterday, today, tomorrow, or YYYY-MM-DD (years 0001–9999)
     #[arg(long = "when", value_name = "WHEN")]
     when_flag: Option<String>,
 
