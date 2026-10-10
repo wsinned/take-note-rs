@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v2.5.0 - 2026-10-10
+#### Features
+- support daily notes for a specific date - (d3aac64) - Dennis Woodruff
+
+- - -
+
 ## v2.4.4 - 2026-09-20
 #### Bug Fixes
 - validate note options before writing - (ae8f566) - Dennis Woodruff
