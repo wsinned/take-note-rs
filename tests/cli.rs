@@ -384,3 +384,110 @@ fn run_weekly_json(home: &Path, notes: &Path) -> Vec<serde_json::Value> {
 
     serde_json::from_slice(&output).unwrap()
 }
+
+#[test]
+fn daily_explicit_date_creates_and_reuses_note_with_both_when_forms() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+    std::fs::create_dir(&notes).unwrap();
+    std::fs::write(notes.join("daily.md"), "# {{date}}\n").unwrap();
+    let expected = notes.join("2024/02/2024-02-29-Daily-log.md");
+
+    for (args, created) in [
+        (vec!["daily", "2024-02-29"], true),
+        (vec!["daily", "--when", "2024-02-29"], false),
+    ] {
+        let output = cargo_bin_cmd!("take-note")
+            .env("HOME", home.path())
+            .env("USERPROFILE", home.path())
+            .args(args)
+            .arg("--notes-folder")
+            .arg(&notes)
+            .args(["--template", "daily.md", "--no-open", "--format", "json"])
+            .assert()
+            .success()
+            .get_output()
+            .stdout
+            .clone();
+        let results: Vec<serde_json::Value> = serde_json::from_slice(&output).unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0]["date"], "2024-02-29");
+        assert_eq!(results[0]["created"], created);
+        assert_eq!(Path::new(results[0]["path"].as_str().unwrap()), expected);
+        assert_eq!(
+            std::fs::read_to_string(&expected).unwrap(),
+            if created {
+                "# Thursday 29 February 2024\n"
+            } else {
+                "preserved\n"
+            }
+        );
+        std::fs::write(&expected, "preserved\n").unwrap();
+    }
+}
+
+#[test]
+fn daily_explicit_date_append_and_insert_use_selected_note() {
+    let home = tempfile::tempdir().unwrap();
+    let notes = home.path().join("notes");
+    std::fs::create_dir(&notes).unwrap();
+    std::fs::write(notes.join("daily.md"), "# {{date}}\n## Notes\n").unwrap();
+    let expected = notes.join("2027/01/2027-01-01-Daily-log.md");
+
+    for args in [
+        vec!["daily", "2027-01-01", "first"],
+        vec!["daily", "2027-01-01", "--insert", "Notes", "second"],
+    ] {
+        cargo_bin_cmd!("take-note")
+            .env("HOME", home.path())
+            .env("USERPROFILE", home.path())
+            .args(args)
+            .arg("--notes-folder")
+            .arg(&notes)
+            .args(["--template", "daily.md"])
+            .assert()
+            .success()
+            .stdout(format!("{}\n", expected.display()));
+    }
+    assert_eq!(
+        std::fs::read_to_string(expected).unwrap(),
+        "# Friday 01 January 2027\n## Notes\nfirst\nsecond"
+    );
+}
+
+#[test]
+fn daily_invalid_dates_and_conflicting_when_forms_create_no_notes() {
+    for args in [
+        vec!["daily", "2025-02-29"],
+        vec!["daily", "--when", "2026-04-31"],
+        vec!["daily", "2026-1-05"],
+        vec!["daily", "2026-10-10", "--when", "today"],
+    ] {
+        let home = tempfile::tempdir().unwrap();
+        let notes = home.path().join("notes");
+        cargo_bin_cmd!("take-note")
+            .env("HOME", home.path())
+            .env("USERPROFILE", home.path())
+            .args(&args)
+            .arg("--notes-folder")
+            .arg(&notes)
+            .arg("--no-open")
+            .assert()
+            .failure()
+            .stderr(predicate::str::contains(if args.len() == 4 {
+                "not both"
+            } else {
+                "YYYY-MM-DD"
+            }));
+        assert!(!notes.exists());
+    }
+}
+
+#[test]
+fn daily_help_describes_explicit_dates() {
+    cargo_bin_cmd!("take-note")
+        .args(["daily", "--help"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("YYYY-MM-DD"));
+}

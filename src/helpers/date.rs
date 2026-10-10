@@ -16,6 +16,7 @@ pub enum DailyWhen {
     Yesterday,
     Today,
     Tomorrow,
+    Date(NaiveDate),
 }
 
 /// Errors from invalid when options.
@@ -24,7 +25,9 @@ pub enum DailyWhen {
 pub struct InvalidWhenError;
 
 #[derive(Error, Debug, PartialEq)]
-#[error("invalid when option, must be one of |yesterday|today|tomorrow|")]
+#[error(
+    "invalid when option, must be yesterday, today, tomorrow, or a valid YYYY-MM-DD date (years 0001–9999)"
+)]
 pub struct InvalidDailyWhenError;
 
 impl When {
@@ -46,7 +49,26 @@ impl DailyWhen {
             "yesterday" => Ok(DailyWhen::Yesterday),
             "today" => Ok(DailyWhen::Today),
             "tomorrow" => Ok(DailyWhen::Tomorrow),
-            _ => Err(InvalidDailyWhenError),
+            _ => {
+                let bytes = s.as_bytes();
+                if bytes.len() != 10
+                    || bytes.iter().enumerate().any(|(index, byte)| {
+                        if index == 4 || index == 7 {
+                            *byte != b'-'
+                        } else {
+                            !byte.is_ascii_digit()
+                        }
+                    })
+                {
+                    return Err(InvalidDailyWhenError);
+                }
+                let date =
+                    NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|_| InvalidDailyWhenError)?;
+                if date.year() == 0 {
+                    return Err(InvalidDailyWhenError);
+                }
+                Ok(DailyWhen::Date(date))
+            }
         }
     }
 }
@@ -65,12 +87,13 @@ pub fn date_from_when(date: NaiveDate, when: When) -> NaiveDate {
     }
 }
 
-/// Returns the date relative to the given date for daily notes.
+/// Returns the relative or explicitly selected date for daily notes.
 pub fn date_from_daily_when(date: NaiveDate, when: DailyWhen) -> NaiveDate {
     match when {
         DailyWhen::Yesterday => date - Duration::days(1),
         DailyWhen::Tomorrow => date + Duration::days(1),
         DailyWhen::Today => date,
+        DailyWhen::Date(date) => date,
     }
 }
 
@@ -216,6 +239,48 @@ mod tests {
         assert_eq!(When::from_str("lastWeek").unwrap(), When::LastWeek);
         assert_eq!(When::from_str("nextWeek").unwrap(), When::NextWeek);
         assert!(When::from_str("invalid").is_err());
+    }
+
+    #[test]
+    fn explicit_daily_dates_are_independent_of_today() {
+        let today = NaiveDate::from_ymd_opt(2026, 10, 10).unwrap();
+        for value in [
+            "0001-01-01",
+            "2024-02-29",
+            "2025-12-31",
+            "2027-01-01",
+            "9999-12-31",
+        ] {
+            let expected = NaiveDate::parse_from_str(value, "%Y-%m-%d").unwrap();
+            let when = DailyWhen::from_str(value).unwrap();
+            assert_eq!(when, DailyWhen::Date(expected));
+            assert_eq!(date_from_daily_when(today, when), expected);
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_explicit_daily_dates() {
+        for value in [
+            "",
+            "2025-02-29",
+            "2026-04-31",
+            "2026-00-10",
+            "2026-13-01",
+            "2026-01-00",
+            "2026-1-05",
+            "2026-01-5",
+            "26-01-05",
+            "0000-01-01",
+            "+2026-01-01",
+            "10000-01-01",
+            "2026/01/01",
+            " 2026-01-01",
+            "2026-01-01 ",
+            "2026-01-01T00:00:00",
+            "２０２６-01-01",
+        ] {
+            assert!(DailyWhen::from_str(value).is_err(), "accepted {value:?}");
+        }
     }
 
     #[test]
